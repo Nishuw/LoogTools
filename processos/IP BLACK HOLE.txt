@@ -1,0 +1,33 @@
+IP
+IP NA BLACK HOLE
+
+[style:bold:left]- Verificação se o Circuito possui o serviço de ANTI-DDoS (O IP de WAN ou LAN) está na black 
+hole:
+
+Objetivo[/style]
+Verificar se o Circuito possui o serviço de ANTI-DDoS. 
+
+[style:bold:left]Impacto[/style]
+Não temos conectividade do IP de WAN de outros PEs.
+ Circuito sem conectividade a internet. 
+ Não conseguimos realizar teste de certidão de nascimento no acesso.
+
+[style:bold:left]Verificação / Implementação[/style]
+Circuito utilizado como exemplo: SPO/IP/01174
+Tem duas formas de verificar quando o Circuito tem o ANTI-DDOS configurado:
+[style:bold:left] Para realização do teste no seu próprio PE a interface WAN tem que está em 
+“shutdown”. [/style]
+ O next-hop do endereço de WAN (PE ou CPE) do Circuito será 200.10.159.254, 
+geralmente é este IP, não pegamos outro sendo utilizado. Se quisermos ter ainda mais 
+certeza, é só verificar que este IP de fato aponta para a interface Null0 do PE;
+ O bloco WAN /30 vem sempre marcado na community do BGP 4230:10001. No GACC 
+e IACC a Community 4230:10001 está aplicada no Community-list BLACKHOLE-NAC-EBT.
+ Nos PEs teremos a route-map RR_IPV4_IN que irá alterar o next-hop para 
+200.10.159.254
+
+[image:imagens/IBH_image_1.png]
+[image:imagens/IBH_image_2.png]
+[image:imagens/IBH_image_3.png]
+[image:imagens/IBH_image_4.png]
+[image:imagens/IBH_image_5.png]
+[image:imagens/IBH_image_6.png]
