@@ -1,0 +1,37 @@
+IP
+IP/ROTA DUPLICADOS
+
+Nas atividades pode-se encontrar problemas de roteamento, providos de IP duplicado, 
+podendo ser:
+- IP de LAN duplicado na rota do Backbone (pode ser no mesmo ou em outro “PE”).
+- IP de WAN duplicado na rota ou na interface do Backbone (pode ser no mesmo ou em outro 
+“PE”).
+Como as duplicidades podem ser nas interfaces ou rotas, são efetuados três tipos de filtros 
+diferentes com o comando “ | inc ”
+- Com o bloco de LAN informado no SAIP. (sh run | inc “bloco de LAN”)
+- Com o IP de WAN informado no SAIP. (sh run | inc “IP de WAN CPE”)
+- Com a interface do Backbone. (sh run | inc “interface do PE”)
+Neste exemplo a duplicidade está na rota (mesmo PE), com a interface duplicando.
+
+[image:imagens/IRD_image_1.png]
+
+
+Caso não esteja no mesmo Backbone a duplicidade, deve-se procurar com o comando “show 
+ip route” (em PE Iacc ou Gacc) e “show route” (em PE Uacc).
+Neste exemplo o IP de WAN (Pode ser IP de Lan também) está duplicado com outro Backbone.
+Observe que a interface está desabilitada, e o roteamento informa que este IP está em outro 
+Backbone.
+
+
+[image:imagens/IRD_image_2.png]
+
+
+Com o IP conhecido (Loopback 0 do PE de origem), consegue-se realizar o “Telnet” 
+para o Backbone no qual está aprendendo na tabela de roteamento. 
+
+[image:imagens/IRD_image_3.png]
+
+Realizado o acesso ao Backbone que origina o IP, verifica-se novamente o roteamento 
+para encontrar a interface duplicada.
+
+[image:imagens/IRD_image_4.png]    

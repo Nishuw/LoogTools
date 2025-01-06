@@ -1,0 +1,27 @@
+
+[bold] – Aplica estilo em negrito.
+[center], [left], [right] – Define o alinhamento.
+[red], [yellow] – Define a cor do texto.
+[cipher] – Aplica ciframento (transformação estilística, como texto tachado).
+[font:<nome_da_fonte>] – Altera a fonte.
+
+
+
+[style:bold:center]Este é um título centralizado em negrito[/style]
+
+[style:red:left]Texto alinhado à esquerda em vermelho[/style]
+
+[style:yellow:right:font:Courier New]Texto amarelo, alinhado à direita, com fonte Courier New[/style]
+
+[style:cipher:center]Texto cifrado centralizado[/style]
+
+[image:FAR_CPE_1.png]   <--- ainda não funciona
+
+
+
+
+[style:center]Texto centralizado[/style]  
+
+[style:left:bold]Texto alinhado à esquerda em negrito[/style]
+
+[style:right:yellow:font:Courier New]Texto à direita, amarelo, com fonte Courier New[/style]
