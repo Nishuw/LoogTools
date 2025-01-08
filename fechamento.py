@@ -29,7 +29,7 @@ class Fechamento(QWidget):
         button_layout.addWidget(self.create_button("Formatar", self.formatar_fechamento))
         button_layout.addWidget(self.create_button("Formatar & Copiar", self.formatar_e_copiar))
         layout.addLayout(button_layout)
-
+        
         self.resultado = self.create_output_field(layout)
 
         self.setup_tab_navigation([
