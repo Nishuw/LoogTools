@@ -1,24 +1,109 @@
 import os
 import re
+
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QLineEdit, QTableWidget, QTableWidgetItem,
-    QSplitter, QScrollArea, QTextBrowser, QLabel
+    QSplitter, QScrollArea, QTextBrowser, QLabel, QFrame
 )
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QPoint
+from PyQt6.QtGui import QKeySequence, QShortcut, QTextCharFormat, QColor
+
+class SearchOverlay(QFrame):
+    def __init__(self, content_viewer=None):
+        super().__init__()
+        self.content_viewer = content_viewer
+        self.setWindowFlags(Qt.WindowType.Widget)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(5, 5, 5, 5)
+        self.search_input = QLineEdit(self)
+        self.search_input.setPlaceholderText("Buscar no texto...")
+        self.search_input.setStyleSheet("""
+            QLineEdit {
+                background-color: white;
+                border: 1px solid gray;
+                border-radius: 4px;
+                padding: 4px;
+                max-width: 200px;
+            }
+        """)
+        layout.addWidget(self.search_input)
+        self.search_input.textChanged.connect(self.handle_search)
+        self.search_input.keyPressEvent = self.handle_key_press
+        self.setFixedHeight(40)
+        self.setMaximumWidth(220)
+
+    def handle_key_press(self, event):
+        if event.key() == Qt.Key.Key_Escape:
+            self.clear_and_hide()
+        else:
+            QLineEdit.keyPressEvent(self.search_input, event)
+
+    def clear_and_hide(self):
+        self.search_input.clear()
+        self.hide()
+        if self.content_viewer:
+            self.content_viewer.clear_highlights()
+
+    def handle_search(self):
+        if self.content_viewer:
+            self.content_viewer.highlight_search(self.search_input.text())
 
 class ContentViewer(QScrollArea):
     def __init__(self):
         super().__init__()
         self.setWidgetResizable(True)
+        self.container = QWidget()
+        layout = QVBoxLayout(self.container)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        self.search_overlay = SearchOverlay(content_viewer=self)
+        self.search_overlay.hide()
+        layout.addWidget(self.search_overlay, alignment=Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop)
+
         self.content_widget = QTextBrowser()
         self.content_widget.setOpenExternalLinks(False)
-        self.setWidget(self.content_widget)
         self.content_widget.setStyleSheet("""
             QTextBrowser {
                 background-color: white;
                 padding: 10px;
             }
         """)
+        layout.addWidget(self.content_widget)
+        self.setWidget(self.container)
+
+        self.shortcut = QShortcut(QKeySequence("Ctrl+F"), self)
+        self.shortcut.activated.connect(self.toggle_search)
+
+        # Armazena o HTML original
+        self.original_html = ""
+
+    def toggle_search(self):
+        if self.search_overlay.isVisible():
+            self.search_overlay.clear_and_hide()
+        else:
+            self.search_overlay.show()
+            self.search_overlay.search_input.setFocus()
+
+    def clear_highlights(self):
+        """Restaura o conteúdo original, preservando imagens."""
+        self.content_widget.setHtml(self.original_html)
+
+    def highlight_search(self, search_text: str):
+        """Realça o texto sem alterar o HTML original."""
+        self.clear_highlights()
+
+        if not search_text:
+            return
+
+        # Realçar texto no HTML preservando imagens
+        highlighted_html = re.sub(
+            f"({re.escape(search_text)})",  # Escapa caracteres especiais no texto de busca
+            r'<span style="background-color: yellow;">\1</span>',  # Aplica destaque
+            self.original_html,
+            flags=re.IGNORECASE  # Ignora maiúsculas e minúsculas
+        )
+
+        self.content_widget.setHtml(highlighted_html)
 
     def load_content(self, file_path: str):
         if not os.path.exists(file_path):
@@ -30,7 +115,10 @@ class ContentViewer(QScrollArea):
                 lines = file.readlines()
                 process_content = ''.join(lines[2:]) if len(lines) > 2 else "Conteúdo do processo não disponível"
                 processed_content = self.process_content(process_content, os.path.dirname(file_path))
-                self.content_widget.setHtml(processed_content)
+
+                # Armazena o conteúdo processado como HTML original
+                self.original_html = processed_content
+                self.content_widget.setHtml(self.original_html)
         except Exception as e:
             self.content_widget.setText(f"Erro ao carregar arquivo: {str(e)}")
 
@@ -44,9 +132,7 @@ class ContentViewer(QScrollArea):
             styles = match.group(1).split(':')
             text = match.group(2)
             css_styles = []
-            is_block = False  # Identifica se precisa usar <div> para alinhamento
-
-            # Map styles to CSS
+            is_block = False
             for style in styles:
                 if style == 'bold':
                     css_styles.append('font-weight: bold')
@@ -68,19 +154,14 @@ class ContentViewer(QScrollArea):
                 elif style.startswith('font:'):
                     font_name = style.split(':')[1]
                     css_styles.append(f'font-family: {font_name}')
-
             css_style_string = "; ".join(css_styles)
-            tag = "div" if is_block else "span"  # Usa <div> para alinhamento
+            tag = "div" if is_block else "span"
             return f'<{tag} style="{css_style_string}">{text}</{tag}>'
 
-        # Substituição no conteúdo
         content = re.sub(r'\[style:(.*?)\](.*?)\[\/style\]', replace_styles, content, flags=re.DOTALL)
-
-        # Replace image tags
         content = re.sub(r'\[image:(.*?)\]', replace_image, content)
-
-        # Convert newlines to HTML line breaks
         return content.replace('\n', '<br>')
+
 
 class TroubleshootingWidget(QWidget):
     def __init__(self):

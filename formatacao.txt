@@ -1,4 +1,3 @@
-
 [bold] – Aplica estilo em negrito.
 [center], [left], [right] – Define o alinhamento.
 [red], [yellow] – Define a cor do texto.
