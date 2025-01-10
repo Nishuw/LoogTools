@@ -17,7 +17,7 @@ class CodigosSIPWidget(QWidget):
 
         self.search_input = self.create_search_input(layout)
         self.table = self.create_table(layout)
-
+        
         self.carregar_codigos_sip()
 
     def create_search_input(self, parent_layout: QVBoxLayout) -> QLineEdit:
@@ -35,6 +35,7 @@ class CodigosSIPWidget(QWidget):
         table.setHorizontalHeaderLabels(["Código", "Descrição"])
         table.horizontalHeader().setStretchLastSection(True)
         table.verticalHeader().setVisible(False)
+        table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers) # Impede edição da tabela
         parent_layout.addWidget(table)
         return table
 
