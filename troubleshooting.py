@@ -1,6 +1,5 @@
 import os
 import re
-
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QLineEdit, QTableWidget, QTableWidgetItem,
     QSplitter, QScrollArea, QTextBrowser, QLabel, QFrame
@@ -8,13 +7,18 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QPoint
 from PyQt6.QtGui import QKeySequence, QShortcut, QTextCharFormat, QColor
 
+
 class SearchOverlay(QFrame):
     def __init__(self, content_viewer=None):
         super().__init__()
         self.content_viewer = content_viewer
+        self.setup_ui()
+
+    def setup_ui(self):
         self.setWindowFlags(Qt.WindowType.Widget)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(5, 5, 5, 5)
+
         self.search_input = QLineEdit(self)
         self.search_input.setPlaceholderText("Buscar no texto...")
         self.search_input.setStyleSheet("""
@@ -27,8 +31,10 @@ class SearchOverlay(QFrame):
             }
         """)
         layout.addWidget(self.search_input)
+
         self.search_input.textChanged.connect(self.handle_search)
         self.search_input.keyPressEvent = self.handle_key_press
+
         self.setFixedHeight(40)
         self.setMaximumWidth(220)
 
@@ -48,9 +54,13 @@ class SearchOverlay(QFrame):
         if self.content_viewer:
             self.content_viewer.highlight_search(self.search_input.text())
 
+
 class ContentViewer(QScrollArea):
     def __init__(self):
         super().__init__()
+        self.setup_ui()
+
+    def setup_ui(self):
         self.setWidgetResizable(True)
         self.container = QWidget()
         layout = QVBoxLayout(self.container)
@@ -74,7 +84,6 @@ class ContentViewer(QScrollArea):
         self.shortcut = QShortcut(QKeySequence("Ctrl+F"), self)
         self.shortcut.activated.connect(self.toggle_search)
 
-        # Armazena o HTML original
         self.original_html = ""
 
     def toggle_search(self):
@@ -85,22 +94,19 @@ class ContentViewer(QScrollArea):
             self.search_overlay.search_input.setFocus()
 
     def clear_highlights(self):
-        """Restaura o conteúdo original, preservando imagens."""
         self.content_widget.setHtml(self.original_html)
 
     def highlight_search(self, search_text: str):
-        """Realça o texto sem alterar o HTML original."""
         self.clear_highlights()
 
         if not search_text:
             return
 
-        # Realçar texto no HTML preservando imagens
         highlighted_html = re.sub(
-            f"({re.escape(search_text)})",  # Escapa caracteres especiais no texto de busca
-            r'<span style="background-color: yellow;">\1</span>',  # Aplica destaque
+            f"({re.escape(search_text)})",
+            r'<span style="background-color: yellow;">\1</span>',
             self.original_html,
-            flags=re.IGNORECASE  # Ignora maiúsculas e minúsculas
+            flags=re.IGNORECASE
         )
 
         self.content_widget.setHtml(highlighted_html)
@@ -116,7 +122,6 @@ class ContentViewer(QScrollArea):
                 process_content = ''.join(lines[2:]) if len(lines) > 2 else "Conteúdo do processo não disponível"
                 processed_content = self.process_content(process_content, os.path.dirname(file_path))
 
-                # Armazena o conteúdo processado como HTML original
                 self.original_html = processed_content
                 self.content_widget.setHtml(self.original_html)
         except Exception as e:
@@ -167,10 +172,10 @@ class TroubleshootingWidget(QWidget):
     def __init__(self):
         super().__init__()
         self.processes = []
-        self.init_ui()
+        self.setup_ui()
         self.load_processes()
 
-    def init_ui(self):
+    def setup_ui(self):
         layout = QVBoxLayout()
         self.setLayout(layout)
 
@@ -191,6 +196,7 @@ class TroubleshootingWidget(QWidget):
         self.table.horizontalHeader().setStretchLastSection(True)
         self.table.verticalHeader().setVisible(False)
         self.table.clicked.connect(self.show_process)
+        self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers) # desabilita a edição da cedula
         left_layout.addWidget(self.table)
 
         self.content_viewer = ContentViewer()
