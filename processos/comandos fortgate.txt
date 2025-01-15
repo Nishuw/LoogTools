@@ -1,0 +1,87 @@
+Comandos
+FortiGate
+
+get system arp ========= Listar tabela ARP do sistema
+get system interface - Esse comando fornece uma visão geral das interfaces de rede no dispositivo
+show system interface - Esse comando fornece uma visão geral das interfaces de rede no dispositivo / formata a visualização
+get system status ========= Verificar o status do sistema
+get firewall policy ========= Listar todas as políticas de firewall configuradas
+config firewall policy ========= Acessar configuração das políticas de firewall
+show full-configuration ========= Exibir toda a configuração do dispositivo
+execute reboot ========= Reiniciar o dispositivo
+get log event ========= Exibir logs de eventos do sistema
+config router static ========= Iniciar configuração de rotas estáticas
+get vpn ipsec tunnel ========= Listar túneis VPN IPSec ativos
+execute ping <IP> ========= Testar conexão com endereço IP específico
+diagnose debug enable ========= Ativar modo de depuração para diagnósticos avançados
+diagnose debug disable ========= Desativar modo de depuração
+get system performance status ========= Verificar status de desempenho do sistema
+config system interface ========= Acessar configuração das interfaces de rede
+show version ========= Exibir versão do firmware do Fortigate
+execute traceroute <IP> ========= Realizar traceroute para endereço IP
+config user local ========= Configurar usuários locais
+get user group ========= Listar grupos de usuários configurados
+execute firewall policy list ========= Listar políticas de firewall aplicáveis
+config log setting ========= Acessar configuração de logs
+get firewall address ========= Listar endereços configurados no firewall
+config firewall address ========= Iniciar configuração de endereços no firewall
+get vpn ssl monitor ========= Monitorar túneis VPN SSL ativos
+execute ddos attack ========= Diagnóstico em caso de ataque DDoS
+get session list ========= Listar sessões de tráfego ativas
+config system dns ========= Configurar servidores DNS
+get system time ========= Exibir o tempo atual do sistema
+execute load-config ========= Carregar uma configuração salva
+execute backup config ========= Realizar backup da configuração atual
+execute restore config ========= Restaurar uma configuração a partir de um backup
+diagnose sys top ========= Verificar processos ativos e uso de recursos do sistema
+get router info routing-table all ========= Exibir tabela de roteamento completa
+config wireless-controller ========= Acessar configuração do controlador sem fio
+get wireless-controller wtp ========= Listar pontos de acesso gerenciados
+config firewall policy id <ID> ========= Acessar política de firewall específica pelo ID
+execute clear log ========= Limpar logs do sistema
+diagnose debug flow ========= Habilitar depuração do fluxo de tráfego
+get system performance top ========= Exibir processos que consomem mais recursos
+config firewall service custom ========= Criar ou editar serviços personalizados
+get system alert ========= Exibir alertas do sistema
+execute remote syslog ========= Configurar logs remotos
+diagnose sniffer packet any ========= Iniciar sniffer de pacotes para análise de tráfego
+get device status ========= Exibir status de dispositivos conectados
+config firewall policy staging ========= Gerenciar políticas de firewall em modo de teste
+execute disable admin ========= Desativar conta de administrador
+execute enable admin ========= Habilitar conta de administrador
+get session info ========= Exibir detalhes das sessões ativas
+diagnose sys top [1-10] ========= Exibir principais processos por uso de CPU
+config system global ========= Acessar configuração global do dispositivo
+get hardware status ========= Exibir informações de hardware do dispositivo
+execute shutdown ========= Desligar o dispositivo
+config firewall policy logtraffic ========= Configurar captura de logs para políticas de tráfego
+get application list ========= Listar aplicações reconhecidas pelo FortiGate
+config firewall shaping profile ========= Criar ou editar perfis de controle de largura de banda
+execute ping-options ========= Configurar opções de ping, como tamanho do pacote
+get threat feed ========= Monitorar feeds de ameaça para atualizações
+execute anti-virus update ========= Atualizar definições de antivírus
+diagnose sys flash list ========= Listar conteúdo do armazenamento flash
+get router info bgp summary ========= Exibir resumo da configuração BGP
+execute vpn ipsec sa list ========= Listar associações de segurança VPN IPSec
+get system license ========= Exibir informações sobre a licença do dispositivo
+config log disk setting ========= Configurar definições de logs em disco
+get user peer ========= Exibir informações sobre usuários conectados
+config system time ========= Configurar data e hora do sistema
+execute ha status ========= Exibir status do cluster HA (Alta Disponibilidade)
+config firewall policy edit <ID> ========= Editar política de firewall específica
+execute sslvpn debug ========= Habilitar depuração para VPN SSL
+get application control list ========= Listar definições de controle de aplicativos
+config firewall policy category ========= Configurar categorias de políticas de firewall
+execute update-now ========= Forçar atualização do sistema
+diagnose firewall iprope list ========= Listar regras de inspeção de tráfego
+config user group ========= Configurar grupos de usuários
+execute ipsec tunnel monitor ========= Monitorar túneis IPSec
+get firewall session ========= Exibir informações detalhadas sobre sessões de firewall
+config firewall ssl/ssh profile ========= Criar ou editar perfis SSL/SSH
+execute log filter ========= Aplicar filtros em logs para visualização específica
+get router info ospf ========= Exibir informações sobre OSPF
+config system ha ========= Acessar configuração de alta disponibilidade
+diagnose ip route list ========= Listar rotas IP configuradas
+execute ntp sync ========= Sincronizar horário do dispositivo com servidor NTP
+get user local ========= Listar usuários locais configurados
+execute log save ========= Salvar logs atuais em arquivo
