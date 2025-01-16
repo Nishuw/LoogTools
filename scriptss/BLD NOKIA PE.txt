@@ -1,0 +1,49 @@
+BLD
+NOKIA PE
+
+(tipo de script) BLD NOKIA PE (/tipo de script)
+########### CONFIGURAÇÕES (status) (/status) ##########
+
+
+ admin display-config | match opção 1 context all
+
+################################
+
+admin display-config | match expression opção 4[^0-9] context all
+
+################################
+
+show router interface opção 4
+#
+#
+################################
+
+show qos sap-ingress opção 5
+#
+show qos sap-egress opção 5
+
+################################
+
+# Rota Estatica
+################################
+
+admin display-config | match opção 2 context all
+
+show router static-route next-hop opção 2
+#
+#
+admin display-config | match opção 2 pre-lines 1 post-lines 5
+
+admin display-config | match opção 3 context all
+#
+show router static-route next-hop opção 3 ipv6
+#
+#
+admin display-config | match opção 3 pre-lines 1 post-lines 5 
+
+# Ping
+
+ping opção 2 size 1500 count 15 interface opção 4 rapid 
+
+ping opção 3 size 1452 count 15 interface opção 4 rapid 
+

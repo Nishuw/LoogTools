@@ -31,6 +31,7 @@ class MainWindow(QMainWindow):
 
         buttons = {
             "CPE/GAT": self.open_cpe_gat,
+            "Scripts": self.open_scripts,
             "Telefonia": self.open_telefonia,
             "Troubleshooting": self.open_troubleshooting
         }
@@ -79,6 +80,9 @@ class MainWindow(QMainWindow):
 
     def open_cpe_gat(self):
         self.open_navigation_window("cpe_gat")
+    
+    def open_scripts(self):
+        self.open_navigation_window("scripts")
 
     def open_telefonia(self):
         self.open_navigation_window("telefonia")

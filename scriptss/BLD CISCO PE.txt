@@ -1,0 +1,46 @@
+BLD
+CISCO PE
+(tipo de script) BLD CISCO PE (/tipo de script)
+!######### CONFIGURACOES (status) (/status) ##########
+
+!#################################################
+
+show running-config interface opção 1 
+
+!#################################################
+
+show interface opção 1  
+ 
+!#################################################
+
+show running-config | inc opção 2 
+
+!#################################################
+
+show running-config | inc opção 1
+
+!#################################################
+
+show policy-map int opção 1 
+           
+!#################################################
+
+ping
+
+opção 2 
+15
+1500
+
+
+
+show running-config | include opção 3 
+
+!################################
+
+ping 
+ipv6 
+opção 3
+15 
+1500 
+
+
