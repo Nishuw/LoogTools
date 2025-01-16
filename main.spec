@@ -5,7 +5,7 @@ a = Analysis(
     ['main.py', 'navigation.py', 'observacao.py', 'telefonia.py', 'utils.py', 'fechamento.py', 'codigos_sip.py', 'calculadora_subrede.py', 'coleta_logs_telefonia.py', 'tab_navigation.py', 'troubleshooting.py'],
     pathex=[],
     binaries=[],
-    datas=[('codigos_sip.txt', '.')],
+    datas=[('C:\\\\LoogTools\\\\codigos_sip.txt', '.'), ('C:\\\\LoogTools\\\\processos\\\\imagens', 'processos\\\\imagens'), ('C:\\\\LoogTools\\\\processos', 'processos'), ('C:\\\\LoogTools\\\\scriptss', 'scriptss')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

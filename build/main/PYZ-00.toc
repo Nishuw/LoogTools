@@ -200,6 +200,7 @@
    'PYMODULE'),
   ('quopri', 'C:\\Program Files\\Python311\\Lib\\quopri.py', 'PYMODULE'),
   ('random', 'C:\\Program Files\\Python311\\Lib\\random.py', 'PYMODULE'),
+  ('scripts', 'C:\\LoogTools\\scripts.py', 'PYMODULE'),
   ('selectors', 'C:\\Program Files\\Python311\\Lib\\selectors.py', 'PYMODULE'),
   ('shutil', 'C:\\Program Files\\Python311\\Lib\\shutil.py', 'PYMODULE'),
   ('signal', 'C:\\Program Files\\Python311\\Lib\\signal.py', 'PYMODULE'),
