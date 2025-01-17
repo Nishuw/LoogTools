@@ -218,11 +218,11 @@ class ScriptWidget(QWidget):
         """
         Process script blocks in the content and handle conditional visibility.
         """
-        # Remove o tipo de script da visualização
-        content = re.sub(r'\(tipo de scrip(?:t)?\).*?\(/tipo de scrip(?:t)?\)', '', content, flags=re.DOTALL)
+        # Remove o tipo de script da visualização mantendo as quebras de linha
+        content = re.sub(r'\(tipo de scrip(?:t)?\).*?\(/tipo de scrip(?:t)?\)\n?', '', content, flags=re.DOTALL)
         
-        # Remove blocos relacionados ao (script2)
-        content = re.sub(r'\(script2\).*?\(/script2\)', '', content, flags=re.DOTALL)
+        # Remove blocos relacionados ao (script2) mantendo as quebras de linha
+        content = re.sub(r'\(script2\).*?\(/script2\)\n?', '', content, flags=re.DOTALL)
 
         # Create dictionary of filled options
         filled_options = {}
@@ -251,7 +251,7 @@ class ScriptWidget(QWidget):
             if self.qos_id_input and self.qos_id_input.text().strip():
                 filled_options['opção 5'] = self.qos_id_input.text()
 
-        # Substituir o bloco de status
+        # Substituir o bloco de status mantendo a formatação original
         if 'status' in filled_options:
             content = re.sub(
                 r'!######### CONFIGURACOES \(.*?\) \(/.*?\) ##########',
@@ -266,59 +266,63 @@ class ScriptWidget(QWidget):
                 flags=re.DOTALL
             )
 
-        # Processar linhas com opções
+        # Processar linhas com opções preservando espaços e quebras de linha
         lines = content.split('\n')
         processed_lines = []
-        skip_cisco_block = False
-        block_buffer = []  # Temporário para armazenar o bloco condicional
+        in_ipv6_block = False
+        ipv6_block_lines = []
 
-        for line in lines:
-            if line.startswith('################################'):
-                # Início do bloco especial
-                block_buffer = [line]  # Inicializa o buffer do bloco
-                skip_cisco_block = True
+        for i, line in enumerate(lines):
+            original_line = line  # Preserva a linha original com sua formatação
+            
+            # Detectar início do bloco IPv6
+            if line.strip() == 'show running-config | include opção 3':
+                in_ipv6_block = True
+                ipv6_block_lines = [original_line]
+                continue
+            
+            # Se estiver dentro do bloco IPv6
+            if in_ipv6_block:
+                ipv6_block_lines.append(original_line)
+                # Detectar fim do bloco IPv6
+                if line.strip() == '1500':
+                    in_ipv6_block = False
+                    # Adicionar o bloco apenas se opção 3 estiver preenchida
+                    if 'opção 3' in filled_options:
+                        for block_line in ipv6_block_lines:
+                            if 'opção 3' in block_line:
+                                # Preserva espaços antes e depois da substituição
+                                leading_space = len(block_line) - len(block_line.lstrip())
+                                trailing_space = len(block_line) - len(block_line.rstrip())
+                                modified_line = block_line.replace('opção 3', filled_options['opção 3'])
+                                processed_lines.append(' ' * leading_space + modified_line.strip() + ' ' * trailing_space)
+                            else:
+                                processed_lines.append(block_line)
                 continue
 
-            if skip_cisco_block:
-                # Adiciona linhas ao buffer do bloco especial
-                block_buffer.append(line)
-                if line.strip() == "1500":
-                    # Final do bloco especial
-                    skip_cisco_block = False
-                    # Condicionalmente adiciona o bloco ao resultado
-                    if 'opção 3' in filled_options:
-                        processed_lines.extend(block_buffer)
-                    block_buffer = []  # Reseta o buffer
-                    continue
-
-            if 'opção 3' in line:
-                # Adicionar a linha apenas se "opção 3" estiver preenchida
-                if 'opção 3' in filled_options:
-                    for opt, value in filled_options.items():
-                        line = line.replace(opt, value)
-                    processed_lines.append(line)
-                else:
-                    # Ignorar a linha se "opção 3" não estiver preenchida
-                    continue
-            elif 'opção' in line:
-                # Verifica se todas as outras opções na linha estão preenchidas
+            # Processamento normal para linhas fora do bloco IPv6
+            if 'opção' in line:
                 options_in_line = re.findall(r'opção \d+', line)
                 if all(opt in filled_options for opt in options_in_line):
+                    modified_line = original_line
                     for opt, value in filled_options.items():
-                        line = line.replace(opt, value)
-                    processed_lines.append(line)
+                        modified_line = modified_line.replace(opt, value)
+                    processed_lines.append(modified_line)
                 else:
-                    # Remove apenas as partes com "opção (número)"
-                    for opt in options_in_line:
-                        line = line.replace(opt, "")
-                    processed_lines.append(line.strip())
+                    # Preserva os espaços originais
+                    processed_lines.append(original_line)
             else:
-                processed_lines.append(line)
+                processed_lines.append(original_line)
 
-        # Juntar as linhas processadas
+            # Preserva linhas em branco após cada linha
+            if i < len(lines) - 1 and not lines[i + 1].strip():
+                processed_lines.append('')
+
+        # Juntar as linhas processadas preservando as quebras de linha
         processed_content = '\n'.join(processed_lines)
 
-        return processed_content.strip()
+        # Garantir que termina com uma única quebra de linha
+        return processed_content.rstrip() + '\n'
 
     def update_script(self):
         if self.current_script_index is None:
@@ -345,7 +349,8 @@ class ScriptWidget(QWidget):
         script_content = self.script_view.toPlainText()
         if script_content:
             clipboard = QGuiApplication.clipboard()
-            clipboard.setText(script_content)
+            # Garante que a última linha em branco seja preservada
+            clipboard.setText(script_content.rstrip() + '\n')
             QMessageBox.information(self, "Sucesso", "Script copiado para a área de transferência!")
 
     def clear_fields(self):

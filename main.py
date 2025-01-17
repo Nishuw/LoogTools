@@ -7,7 +7,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("LoogTools")
-        self.setGeometry(100, 100, 800, 600)
+        self.setGeometry(100, 100, 550, 540)
         self.init_ui()
 
     def init_ui(self):
@@ -31,7 +31,8 @@ class MainWindow(QMainWindow):
 
         buttons = {
             "CPE/GAT": self.open_cpe_gat,
-            "Scripts": self.open_scripts,
+            #"Scripts": self.open_scripts,
+            #"Treinamentos": self.open_treinamentos,
             "Telefonia": self.open_telefonia,
             "Troubleshooting": self.open_troubleshooting
         }
@@ -80,9 +81,12 @@ class MainWindow(QMainWindow):
 
     def open_cpe_gat(self):
         self.open_navigation_window("cpe_gat")
-    
-    def open_scripts(self):
-        self.open_navigation_window("scripts")
+
+    #def open_treinamentos(self):
+        #self.open_navigation_window("treinamentos") 
+
+    #def open_scripts(self):
+       #self.open_navigation_window("scripts")
 
     def open_telefonia(self):
         self.open_navigation_window("telefonia")
