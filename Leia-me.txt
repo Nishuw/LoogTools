@@ -1,0 +1,167 @@
+Consulta sobre a Ferramenta de Substituição do LoogTools
+
+Informamos que foi desenvolvida uma nova ferramenta com o objetivo de substituir a antiga ferramenta LoogTools.
+
+Importante:
+
+Solicitamos que não modifique o script, pois qualquer alteração comprometerá a execução da ferramenta.
+Copiar o arquivo para a maquina e não executar direto do diretório
+
+Suporte:
+
+Em caso de dúvidas, sugestões ou quaisquer outros esclarecimentos, por gentileza, entre em contato com Ryan Nishikawa ou com os supervisores João e Lázaro.
+Versão Atual:
+
+=====================================
+VERSÃO ATUAL DO PROJETO: 1.1.3
+=====================================
+
+
+
+
+
+
+
+=====================================
+LOG DE ATUALIZAÇÕES - CALCULADORA DE SUB-REDE
+Data: 11/12/24
+=====================================
+
+1. Funcionalidade de Exportação:
+   - Adicionado botão "Exportar para Arquivo" na aba "Calculadora de Sub-rede".
+   - Exporta os resultados da calculadora para um arquivo de texto no formato:
+     `~/subnet_calculo_resultado.txt`.
+   - Cada propriedade e valor calculado é gravado no arquivo em um formato estruturado.
+
+2. Funcionalidade de Copiar Resultado:
+   - Adicionado botão "Copiar Resultado" na aba "Calculadora de Sub-rede".
+   - Copia os resultados exibidos no `Treeview` para a área de transferência do sistema.
+   - Resultados copiados são formatados da mesma forma que o arquivo de exportação.
+
+3. Melhorias de Interface:
+   - Organização dos botões na aba "Calculadora de Sub-rede":
+     - "Calcular"
+     - "Limpar"
+     - "Exportar para Arquivo"
+     - "Copiar Resultado"
+   - Adicionado feedback visual nas operações de copiar e exportar:
+     - Mensagem de sucesso ou erro para o usuário.
+
+4. Mensagens e Validações:
+   - Verificação se há dados calculados antes de exportar ou copiar.
+   - Tratamento de exceções com mensagens claras ao usuário.
+
+=====================================
+VERSÃO DO PROJETO: 0.5.1
+Data: 19/12/2024
+=====================================
+
+1. Reformação do código 
+   - Feito a fatoração do código
+   - Otimização na mascara de rede 
+   - Arquivo .exe criado
+
+=====================================
+VERSÃO DO PROJETO: 0.5.2
+Data: 20/12/2024
+=====================================
+
+1. Menu para separação de setores criadas
+  - Seleção CPE/GAT e Telefonia 
+  - Botão Retornar menu criado
+  - Correção de bug de navegação por tab concertado 
+  - Identificado um bug que ao fechar o programa, apresenta um erro. 
+
+=====================================
+VERSÃO DO PROJETO: 0.6.2
+Data: 26/12/2024
+=====================================
+
+## Adicionado
+- Nova aba "Coleta de Logs" na seção Telefonia
+- Sistema de scroll para melhor visualização em telas menores
+- Funcionalidade de cópia automática para área de transferência
+
+## Corrigido
+- Problema de importação circular entre módulos
+- Bug na inicialização das abas de Telefonia
+- Problemas de layout em resoluções baixas
+
+## Modificado
+- Reestruturação do sistema de importação de módulos
+- Reorganização da hierarquia de classes
+- Otimização do carregamento de abas
+
+## Estrutura Atual
+- Menu Principal
+  - CPE/GAT
+    - Observação
+    - Fechamento
+    - Calculadora de Sub-rede
+  - Telefonia
+    - Telefonia
+    - Códigos SIP
+    - Coleta de Logs (Novo)
+
+## Detalhes Técnicos
+- Implementado QScrollArea para todas as abas
+- Removida dependência circular em telefonia.py
+- Otimizado gerenciamento de memória
+- Melhorada organização do código fonte
+
+## Pendências
+- Implementar sistema de backup automático
+- Adicionar validação de campos
+- Otimizar performance em carregamentos longos
+
+=====================================
+VERSÃO DO PROJETO: 0.6.4
+11:15 10/01/2025
+=====================================
+
+## Adicionado 
+- Nova aba "TroubleShooting" no menu inicial 
+- ferramenta de busca (control + f) adicionada na aba troubleshooting 
+
+## Modificado 
+- Foi modificado o campo de edição da pagina códigos sip e troubleshooting. 
+
+## Correções 
+- Foram feitas correções no código garantindo a performance do sistema. 
+
+=====================================
+VERSÃO DO PROJETO: 1.1.2
+15:36 20/01/2025
+15:02 04/02/2025
+=====================================
+
+## Correção 
+- Feito a correção aonde no fechamento a seleção IPVPN ou Voz não formatava corretamente. 
+
+## Modificado 
+- Foi alterado algumas funções não ativadas em algumas opções. 
+- Alterado o script da coleta do TG 
+
+## Adicionado 
+- Adicionado alertas na coleta de informações na área de telefonia caso houver mudança de tg ou atividade 
+Broadsoft. 
+
+- Icone ao projeto
+
+- Adicionado função de calcular ipv6
+
+- refeito o log de fechamento
+
+=====================================
+VERSÃO DO PROJETO: 1.1.3
+15:40 05/02/2025
+=====================================
+
+## Correção 
+ - Feito a correção nas logs finais 
+
+## modificado 
+ - modificado a aparência do programa com o icons
+
+## Adicionado 
+ - adicionado nova aba no CPE para a formatação do Logs de certidão
