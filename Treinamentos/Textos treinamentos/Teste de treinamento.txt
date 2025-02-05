@@ -1,3 +1,7 @@
 Treinamento Exemplo
 Descrição do treinamento
+
+
+Teste de video e titulo
+
 [video:natureza.mp4]

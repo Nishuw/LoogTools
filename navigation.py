@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QTabWidget, QPushButton, QScrollArea
+from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QTabWidget, QPushButton, QScrollArea, QLabel
 from PyQt6.QtCore import Qt
 from utils import create_scrollable_area
 from observacao import ObservacaoWidget
@@ -10,6 +10,21 @@ from coleta_logs_telefonia import ColetaDeLogsWidget
 from troubleshooting import TroubleshootingWidget
 #from scripts import ScriptWidget
 #from treinamentos import TreinamentosWidget
+from PyQt6.QtGui import QPixmap, QIcon  # Import QIcon
+
+import os
+import sys
+
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
+
 
 class NavigationWindow(QMainWindow):
     def __init__(self, window_type: str):
@@ -19,11 +34,23 @@ class NavigationWindow(QMainWindow):
         self.init_ui(window_type)
 
     def init_ui(self, window_type: str):
+        # Definir o ícone da janela
+        icon_path = os.path.join('icones', 'global_hitss_logo.png')
+        self.setWindowIcon(QIcon(resource_path(icon_path)))
+
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
 
         layout = QVBoxLayout()
         central_widget.setLayout(layout)
+
+        # Adicionar o Banner:
+        banner_path = os.path.join('icones', 'global_hitss_banner.png')  # Ajustado para 'icones'
+        banner_pixmap = QPixmap(resource_path(banner_path))
+        banner_label = QLabel()
+        banner_label.setPixmap(banner_pixmap.scaledToWidth(250))
+        banner_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(banner_label)
 
         self.tab_widget = QTabWidget()
         layout.addWidget(self.tab_widget)
@@ -77,8 +104,8 @@ class NavigationWindow(QMainWindow):
     #def load_scripts_tabs(self):
        # self.add_tab(ScriptWidget(), "Scripts")  # Nova função para carregar a aba de scripts
 
-   # def load_treinamentos_tabs(self):
-       # self.add_tab(TreinamentosWidget(), "Treinamentos")
+    #def load_treinamentos_tabs(self):
+        #self.add_tab(TreinamentosWidget(), "Treinamentos")
 
     def load_telefonia_tabs(self):
         self.add_tab(TelefoniaWidget(), "Telefonia")

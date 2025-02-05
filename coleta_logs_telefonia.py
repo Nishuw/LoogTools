@@ -39,7 +39,6 @@ class ColetaDeLogsWidget(QWidget):
 
         self.resultado = self.create_output_field("Resultado da Formatação:", layout)
 
-
     def create_radio_group(self, label_text: str, options: list[str], parent_layout: QVBoxLayout) -> QButtonGroup:
         parent_layout.addWidget(QLabel(label_text))
         group = QButtonGroup()
@@ -96,23 +95,40 @@ class ColetaDeLogsWidget(QWidget):
         QMessageBox.information(self, "Sucesso", "Texto copiado para a área de transferência!")
 
     def gerar_comandos(self, gerencia: str, tg: str) -> list[str]:
-     comandos = [
-        f"LST TG:TG={tg},SSR=YES,SRT=YES,SOF=YES,SL=YES,SC=YES,SS=YES,SOT=YES,CLRDSP=YES,STGAP=YES,SCAC=YES,DIFF=YES,DCMI=YES;",
-        f"LST RT: R={tg}, SSR=YES;",
-        f"LST SRT: SRC={tg}, ST=YES;",
-        f"LST TGLDIDX:TG={tg};",
-        f"LST TKDNSEG:TGNO={tg};",
-        f"LST TGDSG: TG={tg};",
-        f"LST TKC: TG={tg};",
-        f"DSP OFTK:LT=TG,TG={tg},DT=AT;",
-        f"LST SIPIPPAIR:TG={tg};",
-        f"DSP SIPTG:TG={tg};",
-        f"MOD BTG:TG={tg},BLS=UBL;",
-        f"LST SIPTG:TG={tg},SSR=YES,SRTLST=YES,SOF=YES,SOT=YES,CLRDSP=YES,SAP=YES,SCMC=YES;",
-        f"LST RTANA:LST=MIX, RSC={tg}, SPFX=YES;"
-    ]
-    
-     return comandos
+        if gerencia == "MAE":
+            return [
+                f"TG:TG={tg},SSR=YES,SRT=YES,SOF=YES,SL=YES,SC=YES,SS=YES,SOT=YES,CLRDSP=YES,STGAP=YES,SCAC=YES,DIFF=YES,DCMI=YES;",
+                f"LST SIPTG:TG={tg},SSR=YES,SRT=YES,SOF=YES,SOT=YES,CLRDSP=YES,SAP=YES,SCMC=YES;",
+                f"LST RT: R={tg}, SSR=YES;",
+                f"LST SRT: SRC={tg}, ST=YES;",
+                f"LST TGLDIDX:TG={tg};",
+                f"LST RTANA:MOD=MIX,RSC={tg},SPFX=YES;",
+                f"LST TKDNSEG:TGNO={tg};",
+                f"LST TGDSG: TG={tg};",
+                f"LST TKC: TG={tg};",
+                f"DSP OFTK:LT=TG,TG={tg},DT=AT;",
+                f"LST SIPIPPAIR:TG={tg};",
+                f"DSP SIPTG:TG={tg};",
+                f"MOD BTG:TG={tg},BLS=UBL;"
+            ]
+        else:  # LMT
+            return [
+                f"TG:TG={tg},SSR=YES,SRT=YES,SOF=YES,SL=YES,SC=YES,SS=YES,SOT=YES,CLRDSP=YES,STGAP=YES,SCAC=YES,DIFF=YES,DCMI=YES;",
+                f"LST SIPTG:TG={tg},SSR=YES,SRT=YES,SOF=YES,SOT=YES,CLRDSP=YES,SAP=YES,SCMC=YES;",
+                f"LST SIPTG:TG={tg},SSR=YES,SRTLST=YES,SOF=YES,SOT=YES,CLRDSP=YES,SAP=YES,SCMC=YES;",
+                f"LST RT: R={tg}, SSR=YES;",
+                f"LST SRT: SRC={tg}, ST=YES;",
+                f"LST TGLDIDX:TG={tg};",
+                f"LST RTANA:MOD=MIX,RSC={tg},SPFX=YES;",
+                f"LST RTANA:LST=MIX, RSC={tg}, SPFX=YES;",
+                f"LST TKDNSEG:TGNO={tg};",
+                f"LST TGDSG: TG={tg};",
+                f"LST TKC: TG={tg};",
+                f"DSP OFTK:LT=TG,TG={tg},DT=AT;",
+                f"LST SIPIPPAIR:TG={tg};",
+                f"DSP SIPTG:TG={tg};",
+                f"MOD BTG:TG={tg},BLS=UBL;"
+            ]
 
     def limpar_campos(self):
         self.tg_input.clear()

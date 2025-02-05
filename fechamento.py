@@ -17,7 +17,7 @@ class Fechamento(QWidget):
         self.responsavel = self.create_text_field("Nome do Responsável:", layout, 50)
 
         self.equip_group = self.create_radio_group("Técnico possui equipamento JDSU ou Wise?", [
-            "Sim", "Não", "Cliente não autorizou", "Atividade IPVPN ou Voz", "Visita única"
+            "Sim", "Não", "Cliente não autorizou", "Atividade IPVPN ou Voz", "Projeto Visita única"
         ], layout)
 
         self.result_group = self.create_radio_group("Resultado do teste:", [
@@ -29,7 +29,7 @@ class Fechamento(QWidget):
         button_layout.addWidget(self.create_button("Formatar", self.formatar_fechamento))
         button_layout.addWidget(self.create_button("Formatar & Copiar", self.formatar_e_copiar))
         layout.addLayout(button_layout)
-        
+
         self.resultado = self.create_output_field(layout)
 
         self.setup_tab_navigation([
@@ -137,40 +137,31 @@ class Fechamento(QWidget):
         comentario = self.comentario.toPlainText().strip()
         responsavel = self.responsavel.toPlainText().strip()
         equip_status = self.get_radio_selection(self.equip_group)
+        result_status = self.get_radio_selection(self.result_group)
 
-        if equip_status == "Sim":
-            formatted_text = (
-                f"Comentário de Fechamento: {comentario}\n"
-                f"Responsável pela validação: {responsavel}\n"
-                f"Técnico possui JDSU ou Wise? Sim\n"
-                f"Resultado do teste: {self.get_radio_selection(self.result_group)}"
-            )
-        elif equip_status == "Não":
-            formatted_text = (
-                f"Comentário de Fechamento: {comentario}\n"
-                f"Responsável pela validação: {responsavel}\n"
-                f"Técnico possui JDSU ou Wise? Não"
-            )
-        elif equip_status == "Cliente não autorizou":
-            formatted_text = (
-                f"Comentário de Fechamento: {comentario}\n"
-                f"Responsável pela validação: {responsavel}\n"
-                f"Situação: Cliente não autorizou"
-            )
-        elif equip_status == "Visita única":
-            formatted_text = (
-                f"Comentário de Fechamento: {comentario}\n"
-                f"Responsável pela validação: {responsavel}\n"
-                f"Situação: Projeto Visita Única"
-            )
-        else:
-            test_result = self.get_radio_selection(self.result_group)
-            formatted_text = (
-                f"Comentário de Fechamento: {comentario}\n"
-                f"Responsável pela validação: {responsavel}\n"
-                f"{equip_status}\n"
-                f"Resultado do teste: {test_result}"
-            )
+        formatted_text = ""
+
+        if comentario:
+            formatted_text += "===== Comentário de Fechamento =====\n"
+            formatted_text += f"{comentario}\n"
+            if equip_status == "Sim":
+                formatted_text += f"Técnico possui JDSU ou Wise? Sim\n"
+                formatted_text += f"Resultado do teste: {result_status}\n"
+            elif equip_status == "Não":
+                 formatted_text += f"Técnico possui JDSU ou Wise? Não\n"
+            elif equip_status == "Cliente não autorizou":
+                 formatted_text +=  "Situação: Cliente não autorizou\n"
+            elif equip_status == "Atividade IPVPN ou Voz":
+                 formatted_text += "Atividade IPVPN ou Voz\n"
+            elif equip_status == "Projeto Visita única":
+                 formatted_text += "Situação: Projeto Visita Única\n"
+
+
+        if responsavel:
+            formatted_text += "===== Responsável pela validação =====\n"
+            formatted_text += f"{responsavel}\n"
+
+
 
         self.resultado.setPlainText(formatted_text)
         return formatted_text

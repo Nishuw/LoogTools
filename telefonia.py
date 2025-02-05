@@ -1,5 +1,6 @@
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QLabel, QTextEdit, QPushButton, QHBoxLayout, QButtonGroup, QRadioButton
+    QWidget, QVBoxLayout, QLabel, QTextEdit, QPushButton, QHBoxLayout, 
+    QButtonGroup, QRadioButton, QMessageBox
 )
 from PyQt6.QtGui import QGuiApplication
 from tab_navigation import setup_tab_navigation
@@ -90,6 +91,26 @@ class TelefoniaWidget(QWidget):
         parent_layout.addWidget(output)
         return output
 
+    def show_warning_popup(self, message: str):
+        msg = QMessageBox(self)
+        msg.setIcon(QMessageBox.Icon.Warning)
+        msg.setText(message)
+        msg.setWindowTitle("Atenção!")
+        msg.exec()
+
+    def check_conditions(self):
+        # Verifica condição para opção 4
+        if self.get_radio_value(self.migrou_group) == "Sim":
+            self.show_warning_popup(
+                "Migração de Central: Enviar e-mail para CCIPSOE@."
+            )
+        
+        # Verifica condição para opção 5
+        if self.get_radio_value(self.broadsoft_group) == "Sim":
+            self.show_warning_popup("Antes de finalizar a Ordem de Serviço (OS), é imprescindível acionar o "
+                "Suporte N2 para realizar a inclusão da numeração do cliente no servidor "
+                "IMS-ENUM, exceto em casos de Pré-Teste de Portabilidade.")
+
     def limpar_campos(self):
         for field in [self.justificativa, self.ticket_ims, self.responsavel, self.resultado]:
             field.clear()
@@ -132,6 +153,7 @@ class TelefoniaWidget(QWidget):
     def formatar_e_copiar(self):
         formatted_text = self.formatar_fechamento()
         if formatted_text:
+            self.check_conditions()  # Chama a verificação das condições
             clipboard = QGuiApplication.clipboard()
             clipboard.setText(formatted_text)
 

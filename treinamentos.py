@@ -2,12 +2,14 @@ import os
 import re
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QLineEdit, QTableWidget, QTableWidgetItem,
-    QSplitter, QScrollArea, QTextBrowser, QLabel, QFrame
+    QSplitter, QScrollArea, QTextBrowser, QLabel, QFrame, QPushButton, QHBoxLayout, QSlider
 )
 from PyQt6.QtCore import Qt, QUrl
 from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtMultimedia import QMediaPlayer
 from PyQt6.QtMultimediaWidgets import QVideoWidget
+from PyQt6.QtCore import Qt, QUrl, QTimer
+from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
 
 
 class SearchOverlay(QFrame):
@@ -56,15 +58,42 @@ class SearchOverlay(QFrame):
         if self.content_viewer:
             self.content_viewer.highlight_search(self.search_input.text())
 
+class CustomVideoWidget(QVideoWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowFlags(Qt.WindowType.Window)  # Permite janela independente
+        
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key.Key_Escape and self.isFullScreen():
+            self.exitFullScreen()
+        else:
+            super().keyPressEvent(event)
+            
+    def exitFullScreen(self):
+        self.setFullScreen(False)
+        if hasattr(self, 'original_parent'):
+            self.setParent(self.original_parent)
+            self.original_layout.insertWidget(0, self)
+            self.controls_widget.setParent(self.original_parent)
+            self.original_layout.addWidget(self.controls_widget)
+            self.show()
+            self.controls_widget.show()
+
 class ContentViewer(QScrollArea):
     def __init__(self):
         super().__init__()
-        # Player para vídeo
         self.video_player = QMediaPlayer()
+        self.audio_output = QAudioOutput()
+        self.video_player.setAudioOutput(self.audio_output)
         self.video_widget = None
-        # Player para áudio
         self.audio_player = QMediaPlayer()
+        self.is_fullscreen = False
+        self.is_theater_mode = False  # Adicionado
         self.setup_ui()
+        
+        self.timer = QTimer()
+        self.timer.setInterval(1000)
+        self.timer.timeout.connect(self.update_position)
 
     def setup_ui(self):
         self.setWidgetResizable(True)
@@ -116,11 +145,173 @@ class ContentViewer(QScrollArea):
 
     def create_video_player(self):
         if self.video_widget is None:
-            self.video_widget = QVideoWidget()
+            self.video_container = QWidget()
+            video_layout = QVBoxLayout(self.video_container)
+            video_layout.setContentsMargins(0, 0, 0, 0)
+            
+            # Usando o CustomVideoWidget
+            self.video_widget = CustomVideoWidget()
             self.video_widget.setMinimumHeight(400)
-            self.media_player.setVideoOutput(self.video_widget)
-            self.layout.addWidget(self.video_widget)
-            self.video_widget.hide()
+            self.video_player.setVideoOutput(self.video_widget)
+            video_layout.addWidget(self.video_widget)
+            
+            # Controles em um widget separado
+            self.controls_widget = QWidget()
+            self.controls_layout = QHBoxLayout(self.controls_widget)
+            self.controls_layout.setContentsMargins(5, 5, 5, 5)
+            
+            # Estilo para os controles
+            self.controls_widget.setStyleSheet("""
+                QWidget {
+                    background-color: rgba(0, 0, 0, 0.7);
+                }
+                QPushButton {
+                    color: white;
+                    border: none;
+                    padding: 5px;
+                    font-size: 16px;
+                }
+                QPushButton:hover {
+                    background-color: rgba(255, 255, 255, 0.2);
+                }
+                QSlider::handle {
+                    background: white;
+                    border: 1px solid #5c5c5c;
+                }
+            """)
+            
+            # Adicionar controles
+            self.play_button = QPushButton("►")
+            self.controls_layout.addWidget(self.play_button)
+            self.play_button.clicked.connect(self.play_pause)
+            
+            self.position_slider = QSlider(Qt.Orientation.Horizontal)
+            self.position_slider.sliderMoved.connect(self.set_position)
+            self.controls_layout.addWidget(self.position_slider)
+            
+            self.volume_slider = QSlider(Qt.Orientation.Horizontal)
+            self.volume_slider.setMaximum(100)
+            self.volume_slider.setValue(50)
+            self.volume_slider.setMaximumWidth(100)
+            self.volume_slider.valueChanged.connect(self.set_volume)
+            self.controls_layout.addWidget(self.volume_slider)
+            
+            self.theater_button = QPushButton("🎭")
+            self.theater_button.clicked.connect(self.toggle_theater_mode)
+            self.controls_layout.addWidget(self.theater_button)
+            
+            self.fullscreen_button = QPushButton("⛶")
+            self.fullscreen_button.clicked.connect(self.toggle_fullscreen)
+            self.controls_layout.addWidget(self.fullscreen_button)
+            
+            video_layout.addWidget(self.controls_widget)
+            
+            self.layout.addWidget(self.video_container)
+            
+            # Conectar sinais
+            self.video_player.playbackStateChanged.connect(self.update_play_button)
+            self.video_player.durationChanged.connect(self.update_duration)
+            self.audio_output.setVolume(0.5)
+
+    def toggle_fullscreen(self):
+        if not self.is_fullscreen:
+            # Guardar o estado normal
+            self.normal_parent = self.video_widget.parent()
+            self.normal_layout = self.video_widget.parent().layout()
+            
+            # Criar container temporário para tela cheia
+            self.fullscreen_container = QWidget()
+            fs_layout = QVBoxLayout(self.fullscreen_container)
+            fs_layout.setContentsMargins(0, 0, 0, 0)
+            
+            # Mover widgets para o container de tela cheia
+            self.video_widget.setParent(self.fullscreen_container)
+            self.controls_widget.setParent(self.fullscreen_container)
+            fs_layout.addWidget(self.video_widget)
+            fs_layout.addWidget(self.controls_widget)
+            
+            self.fullscreen_container.showFullScreen()
+            self.is_fullscreen = True
+            self.fullscreen_button.setText("⊠")
+        else:
+            # Restaurar ao estado normal
+            self.video_widget.setParent(self.normal_parent)
+            self.controls_widget.setParent(self.normal_parent)
+            self.normal_layout.addWidget(self.video_widget)
+            self.normal_layout.addWidget(self.controls_widget)
+            
+            self.fullscreen_container.close()
+            self.fullscreen_container = None
+            
+            self.is_fullscreen = False
+            self.fullscreen_button.setText("⛶")
+
+    def toggle_theater_mode(self):
+        if not self.is_theater_mode:
+            self.normal_height = self.video_widget.height()
+            self.video_widget.setMinimumHeight(600)
+            self.is_theater_mode = True
+            self.theater_button.setText("🎭↙")
+        else:
+            self.video_widget.setMinimumHeight(400)
+            self.is_theater_mode = False
+            self.theater_button.setText("🎭")
+
+    def update_position(self):
+        try:
+            if self.video_player.playbackState() == QMediaPlayer.PlaybackState.PlayingState:
+                self.position_slider.setValue(self.video_player.position())
+        except RuntimeError:
+            # Lidar silenciosamente com erros de widget deletado
+            pass        
+
+    def play_pause(self):
+        if self.video_player.playbackState() == QMediaPlayer.PlaybackState.PlayingState:
+            self.video_player.pause()
+        else:
+            self.video_player.play()
+            self.timer.start()
+
+    def update_play_button(self, state):
+        if state == QMediaPlayer.PlaybackState.PlayingState:
+            self.play_button.setText("⏸")
+        else:
+            self.play_button.setText("►")
+
+    def set_volume(self, value):
+        volume = value / 100
+        self.audio_output.setVolume(volume)
+
+    def update_duration(self, duration):
+        self.position_slider.setRange(0, duration)
+
+    def set_position(self, position):
+        self.video_player.setPosition(position)
+
+
+    def update_position(self):
+        if self.video_player.playbackState() == QMediaPlayer.PlaybackState.PlayingState:
+            self.position_slider.setValue(self.video_player.position())    
+
+    def _handle_link_click(self, url: QUrl):
+        path = url.path()
+        if os.name == 'nt' and path.startswith('/'):
+            path = path[1:]
+            
+        if url.scheme() == "playvideo":
+            self.video_container.show()  # Mostra o container imediatamente
+            self.video_widget.show()     # Garante que o widget de vídeo está visível
+            self.video_player.setSource(QUrl.fromLocalFile(path))
+            # Não inicia o vídeo automaticamente
+            self.timer.start()    
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key.Key_F:
+            self.toggle_fullscreen()
+        elif event.key() == Qt.Key.Key_Escape and self.is_fullscreen:
+            self.toggle_fullscreen()
+        else:
+            super().keyPressEvent(event)
 
     def toggle_search(self):
         if self.search_overlay.isVisible():
@@ -153,6 +344,7 @@ class ContentViewer(QScrollArea):
         
         base_path = os.path.join(os.path.dirname(__file__), "Treinamentos")
         text_folder = os.path.join(base_path, "Textos treinamentos")
+        video_folder = os.path.join(base_path, "Videos treinamentos")
 
         file_path = os.path.join(text_folder, file_name)
         if not os.path.exists(file_path):
@@ -162,9 +354,23 @@ class ContentViewer(QScrollArea):
         try:
             with open(file_path, 'r', encoding='utf-8') as file:
                 lines = file.readlines()
-                process_content = ''.join(lines[2:]) if len(lines) > 2 else "Conteúdo do processo não disponível"
-                processed_content = self.process_content(process_content, base_path)
-
+                content = ''.join(lines[2:]) if len(lines) > 2 else "Conteúdo não disponível"
+                
+                # Procurar por tags de vídeo no conteúdo
+                video_match = re.search(r'\[video:(.*?)\]', content)
+                if video_match:
+                    video_filename = video_match.group(1)
+                    video_path = os.path.join(video_folder, video_filename)
+                    if os.path.exists(video_path):
+                        # Mostrar o vídeo diretamente
+                        self.video_container.show()
+                        self.video_widget.show()
+                        self.video_player.setSource(QUrl.fromLocalFile(video_path))
+                        
+                        # Remover a tag de vídeo do conteúdo
+                        content = re.sub(r'\[video:.*?\]', '', content)
+                
+                processed_content = self.process_content(content, base_path)
                 self.original_html = processed_content
                 self.content_widget.setHtml(self.original_html)
                 
@@ -175,20 +381,11 @@ class ContentViewer(QScrollArea):
         # Subpastas específicas
         image_folder = os.path.join(base_path, "Imagens treinamentos")
         audio_folder = os.path.join(base_path, "Audios treinamentos")
-        video_folder = os.path.join(base_path, "Videos treinamentos")
+        
 
         def replace_image(match):
             image_path = os.path.join(image_folder, match.group(1))
             return f'<img src="{image_path}" />' if os.path.exists(image_path) else f'[Imagem não encontrada: {match.group(1)}]'
-
-        def replace_video(match):
-            video_path = os.path.join(video_folder, match.group(1))
-            if os.path.exists(video_path):
-                # Criar um ID único para o vídeo
-                video_id = f"video_{hash(video_path)}"
-                # Criar um link que acionará o player de vídeo
-                return f'<a href="playvideo:{video_path}" style="color: blue; text-decoration: underline;">Clique para reproduzir o vídeo: {match.group(1)}</a>'
-            return f'[Vídeo não encontrado: {match.group(1)}]'
 
         def replace_audio(match):
             audio_path = os.path.join(audio_folder, match.group(1))
@@ -199,7 +396,6 @@ class ContentViewer(QScrollArea):
 
         # Substituições no conteúdo
         content = re.sub(r'\[image:(.*?)\]', replace_image, content)
-        content = re.sub(r'\[video:(.*?)\]', replace_video, content)
         content = re.sub(r'\[audio:(.*?)\]', replace_audio, content)
         return content.replace('\n', '<br>')
 
