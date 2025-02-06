@@ -1,6 +1,6 @@
 [bold] – Aplica estilo em negrito.
 [center], [left], [right] – Define o alinhamento.
-[red], [yellow] – Define a cor do texto.
+[red], [yellow], [blue]– Define a cor do texto.
 [cipher] – Aplica ciframento (transformação estilística, como texto tachado).
 [font:<nome_da_fonte>] – Altera a fonte.
 
@@ -17,7 +17,7 @@
 [image:FAR_CPE_1.png]   <--- ainda não funciona
 
 
-
+[style:blue]  [/style]
 
 [style:center]Texto centralizado[/style]  
 

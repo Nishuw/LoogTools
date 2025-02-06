@@ -1,6 +1,6 @@
 __pycache__/
-build
-dist
+build/
+dist/
 Treinamentos/
 LoogTools.spec
 Treinamentos/Videos treinamentos/*.mp4

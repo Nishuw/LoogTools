@@ -2,7 +2,7 @@ Configuração
 NAT e DHCP no Router Cisco
 
 [style:bold:center]Procedimento de Configuração de NAT e DHCP[/style]
-
+[style:bold:center] Por Matheus Fabicheo [/style]
 
 [style:bold:left]1. Introdução[/style]
 [style:left]Este documento detalha o procedimento para configurar NAT e DHCP em um roteador Cisco. As etapas incluem a configuração da interface LAN, a interface WAN, a lista de acesso e o NAT overload.[/style]
@@ -28,7 +28,7 @@ NAT e DHCP no Router Cisco
    
 [style:left]5. Defina a interface como "inside" para NAT:[/style]
    
-   [style:blue]ip nat [/style]
+   [style:blue]ip nat inside [/style]
    
 
 [style:bold:left]3. Configuração da Interface WAN[/style]
@@ -46,7 +46,8 @@ NAT e DHCP no Router Cisco
 
 [style:left]1. Configure uma lista de acesso para permitir o NAT:[/style]
    
-   [style:blue]access-list 10 permit <ip de rede do bloco a ser nateado> <wildcard>[/style]
+   [style:blue]access-list 10 permit [ip de rede do bloco a ser nateado] [wildcard][/style]
+   [style:left]precisa ser o wildcard pois se for a mascara de rede não ira funcionar[/style]
    
 [style:left]2. Configure a sobrecarga de NAT (overload):[/style]
    
