@@ -154,6 +154,8 @@ class ContentViewer(QScrollArea):
                     css_styles.append('color: red')
                 elif style == 'yellow':
                     css_styles.append('color: yellow')
+                elif style == 'blue':
+                    css_styles.append('color: blue')    
                 elif style == 'cipher':
                     css_styles.append('text-decoration: line-through')
                 elif style.startswith('font:'):

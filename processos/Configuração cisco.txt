@@ -1,0 +1,99 @@
+Configuração
+NAT e DHCP no Router Cisco
+
+[style:bold:center]Procedimento de Configuração de NAT e DHCP[/style]
+
+
+[style:bold:left]1. Introdução[/style]
+[style:left]Este documento detalha o procedimento para configurar NAT e DHCP em um roteador Cisco. As etapas incluem a configuração da interface LAN, a interface WAN, a lista de acesso e o NAT overload.[/style]
+
+
+[style:bold:left]2. Configuração da Interface LAN[/style]
+
+[style:left]1. Acesse o modo de configuração:[/style]
+
+   [style:blue]conf t[/style]
+   
+[style:left]2. Selecione a interface LAN:[/style]
+   
+[style:blue]interface <Interface onde o IP que será nateado está>[/style]
+   
+[style:left]3. Adicione uma descrição (opcional):[/style]
+   
+   [style:blue]description * LAN *[/style]
+   
+[style:left]4. Configure o endereço IP:[/style]
+   
+   [style:blue]ip address <ip privado a ser nateado> <máscara> secondary[/style]
+   
+[style:left]5. Defina a interface como "inside" para NAT:[/style]
+   
+   [style:blue]ip nat [/style]
+   
+
+[style:bold:left]3. Configuração da Interface WAN[/style]
+
+[style:left]1. Selecione a interface WAN:[/style]
+   
+   [style:blue]interface <interface wan>[/style]
+   
+[style:left]2. Defina a interface como "outside" para NAT:[/style]
+   
+   [style:blue]ip nat outside[/style]
+   
+
+[style:bold:left]4. Configuração de NAT Overload[/style]
+
+[style:left]1. Configure uma lista de acesso para permitir o NAT:[/style]
+   
+   [style:blue]access-list 10 permit <ip de rede do bloco a ser nateado> <wildcard>[/style]
+   
+[style:left]2. Configure a sobrecarga de NAT (overload):[/style]
+   
+   [style:blue]ip nat inside source list 10 interface <interface onde está o ip público> overload[/style]
+   
+
+[style:bold:left]5. Configuração do Servidor DHCP[/style]
+
+[style:left]1. Exclua o endereço do gateway do pool DHCP:[/style]
+   
+   [style:blue]ip dhcp excluded-address 100.100.3.40[/style]
+   
+[style:left]2. Crie o pool DHCP:[/style]
+   
+   [style:blue]ip dhcp pool OI_S.A._BLD[/style]
+   
+[style:left]3. Configure a rede e máscara:[/style]
+   
+   [style:blue]network 100.100.3.0 255.255.255.0[/style]
+   
+[style:left]4. Configure o gateway padrão:[/style]
+   
+   [style:blue]default-router 100.100.3.40[/style]
+   
+[style:left]5. Configure o servidor DNS:[/style]
+   
+[style:blue]dns-server 8.8.8.8[/style]
+   
+
+[style:bold:left]6. Validação das Configurações[/style]
+
+[style:left]1. Verifique a configuração do NAT:[/style]
+   
+   [style:blue]show ip nat translations[/style]
+   
+[style:left]2. Verifique se o DHCP está distribuindo endereços:[/style]
+   
+   [style:blue]show ip dhcp binding[/style]
+   
+[style:left]3. Verifique as interfaces configuradas:[/style]
+   
+   [style:blue]show ip interface brief[/style]
+   
+
+[style:bold:left]7. Conclusão[/style]
+
+[style:left]Seguindo este procedimento, a configuração do NAT e do DHCP será realizada corretamente, permitindo que os dispositivos internos tenham acesso à internet e que os endereços IP sejam distribuídos dinamicamente pela rede.[/style]
+
+[style:left]Se houver problemas, consulte os comandos de verificação e ajuste a configuração conforme necessário.[/style]
+
