@@ -1,12 +1,15 @@
 import os
 import re
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QLineEdit, QTableWidget, QTableWidgetItem,
-    QSplitter, QScrollArea, QTextBrowser, QLabel, QFrame
+    QWidget, QVBoxLayout, QLineEdit, QTableWidget,
+    QTableWidgetItem, QSplitter, QScrollArea, QTextBrowser, QLabel,
+    QFrame
 )
-from PyQt6.QtCore import Qt, QPoint
-from PyQt6.QtGui import QKeySequence, QShortcut, QTextCharFormat, QColor
-
+from PyQt6.QtCore import Qt, QPoint, QUrl
+from PyQt6.QtGui import QKeySequence, QShortcut, QTextCharFormat, QColor, QDesktopServices, QWheelEvent
+# Import adicional para lidar com PDFs
+from PyQt6.QtPdfWidgets import QPdfView
+from PyQt6.QtPdf import QPdfDocument
 
 class SearchOverlay(QFrame):
     def __init__(self, content_viewer=None):
@@ -51,7 +54,7 @@ class SearchOverlay(QFrame):
             self.content_viewer.clear_highlights()
 
     def handle_search(self):
-        if self.content_viewer:
+        if self.content_viewer and self.content_viewer.content_type == "text":
             self.content_viewer.highlight_search(self.search_input.text())
 
 
@@ -59,6 +62,9 @@ class ContentViewer(QScrollArea):
     def __init__(self):
         super().__init__()
         self.setup_ui()
+        self.content_type = None
+        self.current_file_path = None
+        self.base_path = None
 
     def setup_ui(self):
         self.setWidgetResizable(True)
@@ -76,98 +82,139 @@ class ContentViewer(QScrollArea):
             QTextBrowser {
                 background-color: white;
                 padding: 10px;
+                word-wrap: break-word; /* Adicionado para quebrar palavras longas */
+            }
+            br {
+                display: block; /* Adicionado para forçar as quebras de linha */
             }
         """)
+
+        self.pdf_view = QPdfView(self)
+        self.pdf_view.setVisible(False)
+        self.pdf_document = QPdfDocument(self)
+
         layout.addWidget(self.content_widget)
+        layout.addWidget(self.pdf_view)
+
         self.setWidget(self.container)
-
-        self.shortcut = QShortcut(QKeySequence("Ctrl+F"), self)
-        self.shortcut.activated.connect(self.toggle_search)
-
         self.original_html = ""
 
     def toggle_search(self):
-        if self.search_overlay.isVisible():
-            self.search_overlay.clear_and_hide()
-        else:
-            self.search_overlay.show()
-            self.search_overlay.search_input.setFocus()
+        if self.content_type == "text":
+            if self.search_overlay.isVisible():
+                self.search_overlay.clear_and_hide()
+            else:
+                self.search_overlay.show()
+                self.search_overlay.search_input.setFocus()
 
     def clear_highlights(self):
-        self.content_widget.setHtml(self.original_html)
+        if self.content_type == "text":
+            self.content_widget.setHtml(self.original_html)
 
     def highlight_search(self, search_text: str):
-        self.clear_highlights()
+        if self.content_type == "text":
+            self.clear_highlights()
 
-        if not search_text:
-            return
+            if not search_text:
+                return
 
-        highlighted_html = re.sub(
-            f"({re.escape(search_text)})",
-            r'<span style="background-color: yellow;">\1</span>',
-            self.original_html,
-            flags=re.IGNORECASE
-        )
+            highlighted_html = re.sub(
+                f"({re.escape(search_text)})",
+                r'<span style="background-color: yellow;">\1</span>',
+                self.original_html,
+                flags=re.IGNORECASE
+            )
 
-        self.content_widget.setHtml(highlighted_html)
+            self.content_widget.setHtml(highlighted_html)
 
     def load_content(self, file_path: str):
         if not os.path.exists(file_path):
             self.content_widget.setText("Arquivo não encontrado")
             return
 
+        self.current_file_path = file_path
+        self.base_path = os.path.dirname(file_path)
+
         try:
             with open(file_path, 'r', encoding='utf-8') as file:
-                lines = file.readlines()
-                process_content = ''.join(lines[2:]) if len(lines) > 2 else "Conteúdo do processo não disponível"
-                processed_content = self.process_content(process_content, os.path.dirname(file_path))
-
-                self.original_html = processed_content
-                self.content_widget.setHtml(self.original_html)
+                content = file.read()
+                self.process_and_display(content)
         except Exception as e:
             self.content_widget.setText(f"Erro ao carregar arquivo: {str(e)}")
 
-    def process_content(self, content: str, base_path: str) -> str:
-        def replace_image(match):
-            image_path = match.group(1)
-            abs_path = os.path.join(base_path, image_path)
-            return f'<img src="{abs_path}" />' if os.path.exists(abs_path) else f'[Imagem não encontrada: {image_path}]'
+    def process_and_display(self, content: str):
+        def replace_pdf(match):
+            pdf_path = match.group(1)
+            abs_path = os.path.join(self.base_path, pdf_path)
+            if os.path.exists(abs_path) and abs_path.lower().endswith('.pdf'):
+                self.load_pdf(abs_path)
+                return ''
+            else:
+                return f'[PDF não encontrado: {pdf_path}]'
 
-        def replace_styles(match):
-            styles = match.group(1).split(':')
-            text = match.group(2)
-            css_styles = []
-            is_block = False
-            for style in styles:
-                if style == 'bold':
-                    css_styles.append('font-weight: bold')
-                elif style == 'center':
-                    css_styles.append('text-align: center')
-                    is_block = True
-                elif style == 'left':
-                    css_styles.append('text-align: left')
-                    is_block = True
-                elif style == 'right':
-                    css_styles.append('text-align: right')
-                    is_block = True
-                elif style == 'red':
-                    css_styles.append('color: red')
-                elif style == 'yellow':
-                    css_styles.append('color: yellow')
-                elif style == 'blue':
-                    css_styles.append('color: blue')    
-                elif style == 'cipher':
-                    css_styles.append('text-decoration: line-through')
-                elif style.startswith('font:'):
-                    font_name = style.split(':')[1]
-                    css_styles.append(f'font-family: {font_name}')
-            css_style_string = "; ".join(css_styles)
-            tag = "div" if is_block else "span"
-            return f'<{tag} style="{css_style_string}">{text}</{tag}>'
+        content = re.sub(r'\[pdf:(.*?)\]', replace_pdf, content)
 
-        content = re.sub(r'\[style:(.*?)\](.*?)\[\/style\]', replace_styles, content, flags=re.DOTALL)
-        content = re.sub(r'\[image:(.*?)\]', replace_image, content)
-        return content.replace('\n', '<br>')
+        if self.content_type == "pdf":
+            return
+
+        self.original_html = content
+        print(f"HTML gerado: {self.original_html}")  # <-- Adicionado para debug
+        self.content_widget.setHtml(self.original_html)
+        self.content_type = "text"
+        self.content_widget.setVisible(True)
+        self.pdf_view.setVisible(False)
+        self.search_overlay.show()
+
+    def load_pdf(self, file_path: str):
+        self.content_widget.setVisible(False)
+        self.pdf_view.setVisible(True)
+        self.content_type = "pdf"
+        self.search_overlay.hide()
+
+        try:
+            self.pdf_document.load(file_path)
+            self.pdf_view.setDocument(self.pdf_document)
+        except Exception as e:
+            self.content_widget.setText(f"Erro ao carregar PDF: {str(e)}")
+            self.content_widget.setVisible(True)
+            self.pdf_view.setVisible(False)
+            self.content_type = "text"
+
+    def clear_content(self):
+        self.pdf_view.setDocument(QPdfDocument(self))
+        self.content_widget.clear()
+        self.content_widget.setVisible(True)
+        self.pdf_view.setVisible(False)
+        self.content_type = "text"
+        self.original_html = ""
+        self.search_overlay.show()
+
+    def set_base_path(self, base_path: str):
+        """Sets the base path for resolving relative file paths."""
+        self.base_path = base_path
+
+    def zoom_in(self):
+        """Zooms in the PDF view."""
+        if self.content_type == "pdf":
+            current_zoom = self.pdf_view.zoomFactor()
+            self.pdf_view.setZoomFactor(current_zoom + 0.1)  # Aumenta o zoom em 10%
+
+    def zoom_out(self):
+        """Zooms out the PDF view."""
+        if self.content_type == "pdf":
+            current_zoom = self.pdf_view.zoomFactor()
+            self.pdf_view.setZoomFactor(current_zoom - 0.1)  # Diminui o zoom em 10%
+
+    def wheelEvent(self, event: QWheelEvent):
+        if self.content_type == "pdf" and event.modifiers() == Qt.KeyboardModifier.ControlModifier:
+            delta = event.angleDelta().y()
+            if delta > 0:
+                self.zoom_in()
+            else:
+                self.zoom_out()
+            event.accept()  # Indica que o evento foi tratado
+        else:
+            super().wheelEvent(event)  # Chama o comportamento padrão
 
 
 class TroubleshootingWidget(QWidget):
@@ -198,7 +245,7 @@ class TroubleshootingWidget(QWidget):
         self.table.horizontalHeader().setStretchLastSection(True)
         self.table.verticalHeader().setVisible(False)
         self.table.clicked.connect(self.show_process)
-        self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers) # desabilita a edição da cedula
+        self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         left_layout.addWidget(self.table)
 
         self.content_viewer = ContentViewer()
@@ -225,16 +272,67 @@ class TroubleshootingWidget(QWidget):
                 lines = f.readlines()
                 process_name = lines[0].strip() if len(lines) >= 1 else os.path.basename(file_path)[:-4]
                 description = lines[1].strip() if len(lines) >= 2 else "Sem descrição disponível"
+                content = ''.join(lines[2:]) if len(lines) > 2 else ""
+                print(f"Conteúdo lido do arquivo: {content}")
+
+                # Processa o conteúdo para substituir tags de estilo e imagem
+                def replace_image(match):
+                    image_path = match.group(1)
+                    abs_path = os.path.join(os.path.dirname(file_path), image_path)
+                    print(f"Substituindo imagem: {image_path} -> {abs_path}")
+                    return f'<img src="{abs_path}" />' if os.path.exists(abs_path) else f'[Imagem não encontrada: {image_path}]'
+
+                def replace_styles(match):
+                    styles = match.group(1).split(':')
+                    text = match.group(2)
+                    print(f"Substituindo estilos: {styles} -> {text}")
+                    css_styles = []
+                    is_block = False
+                    for style in styles:
+                        if style == 'bold':
+                            css_styles.append('font-weight: bold')
+                        elif style == 'center':
+                            css_styles.append('text-align: center')
+                            is_block = True
+                        elif style == 'left':
+                            css_styles.append('text-align: left')
+                            is_block = True
+                        elif style == 'right':
+                            css_styles.append('text-align: right')
+                            is_block = True
+                        elif style == 'red':
+                            css_styles.append('color: red')
+                        elif style == 'yellow':
+                            css_styles.append('color: yellow')
+                        elif style == 'blue':
+                            css_styles.append('color: blue')
+                        elif style == 'cipher':
+                            css_styles.append('text-decoration: line-through')
+                        elif style.startswith('font:'):
+                            font_name = style.split(':')[1]
+                            css_styles.append(f'font-family: {font_name}')
+                    css_style_string = "; ".join(css_styles)
+                    tag = "div" if is_block else "span"
+                    return f'<{tag} style="{css_style_string}">{text}</{tag}>'
+
+                content = re.sub(r'\[style:(.*?)\](.*?)\[\/style\]', replace_styles, content, flags=re.DOTALL)
+                content = re.sub(r'\[image:(.*?)\]', replace_image, content)
+                content = content.replace('\n', '<br>')
+                print(f"HTML Completo: {content[:500]}...")
+
                 self.processes.append({
                     "name": process_name,
                     "description": description,
-                    "file_path": file_path
+                    "file_path": file_path,
+                    "content": content
                 })
-        except Exception:
+        except Exception as e:
+            print(e)
             self.processes.append({
                 "name": os.path.basename(file_path)[:-4],
                 "description": "Erro ao carregar descrição",
-                "file_path": file_path
+                "file_path": file_path,
+                "content": ""
             })
 
     def populate_table(self):
@@ -254,4 +352,7 @@ class TroubleshootingWidget(QWidget):
         row = index.row()
         if 0 <= row < len(self.processes):
             file_path = self.processes[row]["file_path"]
-            self.content_viewer.load_content(file_path)
+            content = self.processes[row]["content"]
+            self.content_viewer.clear_content()
+            self.content_viewer.set_base_path(os.path.dirname(file_path))
+            self.content_viewer.process_and_display(content)

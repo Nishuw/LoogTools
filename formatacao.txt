@@ -24,3 +24,7 @@
 [style:left:bold]Texto alinhado à esquerda em negrito[/style]
 
 [style:right:yellow:font:Courier New]Texto à direita, amarelo, com fonte Courier New[/style]
+
+
+[pdf:pdfs/teste_pdf.pdf] Insere um PDF, até o momento funciona de forma unica na pagina, nao pode ser
+interpretado com outras fontes. 

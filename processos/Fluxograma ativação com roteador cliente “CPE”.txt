@@ -1,4 +1,4 @@
 Fluxograma ativação 
 Roteador do cliente “CPE”
 
-[image:imagens/FAR_CPE_1.png]
+[pdf:pdfs/FAR_CPE_1.pdf]
