@@ -3,13 +3,14 @@ import re
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QLineEdit, QTableWidget,
     QTableWidgetItem, QSplitter, QScrollArea, QTextBrowser, QLabel,
-    QFrame
+    QFrame, QSizePolicy
 )
 from PyQt6.QtCore import Qt, QPoint, QUrl
 from PyQt6.QtGui import QKeySequence, QShortcut, QTextCharFormat, QColor, QDesktopServices, QWheelEvent
 # Import adicional para lidar com PDFs
 from PyQt6.QtPdfWidgets import QPdfView
 from PyQt6.QtPdf import QPdfDocument
+
 
 class SearchOverlay(QFrame):
     def __init__(self, content_viewer=None):
@@ -76,16 +77,16 @@ class ContentViewer(QScrollArea):
         self.search_overlay.hide()
         layout.addWidget(self.search_overlay, alignment=Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop)
 
-        self.content_widget = QTextBrowser()
+        self.content_widget = QTextBrowser()  # Revertendo para QTextBrowser
         self.content_widget.setOpenExternalLinks(False)
         self.content_widget.setStyleSheet("""
             QTextBrowser {
                 background-color: white;
                 padding: 10px;
-                word-wrap: break-word; /* Adicionado para quebrar palavras longas */
+                white-space: pre-wrap;
             }
             br {
-                display: block; /* Adicionado para forçar as quebras de linha */
+                display: block;
             }
         """)
 
@@ -158,7 +159,6 @@ class ContentViewer(QScrollArea):
             return
 
         self.original_html = content
-        print(f"HTML gerado: {self.original_html}")  # <-- Adicionado para debug
         self.content_widget.setHtml(self.original_html)
         self.content_type = "text"
         self.content_widget.setVisible(True)
@@ -197,24 +197,36 @@ class ContentViewer(QScrollArea):
         """Zooms in the PDF view."""
         if self.content_type == "pdf":
             current_zoom = self.pdf_view.zoomFactor()
-            self.pdf_view.setZoomFactor(current_zoom + 0.1)  # Aumenta o zoom em 10%
+            self.pdf_view.setZoomFactor(current_zoom + 0.1)
 
     def zoom_out(self):
         """Zooms out the PDF view."""
         if self.content_type == "pdf":
             current_zoom = self.pdf_view.zoomFactor()
-            self.pdf_view.setZoomFactor(current_zoom - 0.1)  # Diminui o zoom em 10%
+            self.pdf_view.setZoomFactor(current_zoom - 0.1)
 
     def wheelEvent(self, event: QWheelEvent):
-        if self.content_type == "pdf" and event.modifiers() == Qt.KeyboardModifier.ControlModifier:
+        if self.content_type == "text" and event.modifiers() == Qt.KeyboardModifier.ControlModifier:  # Adicionada condição para o tipo texto
+            font = self.content_widget.font()
+            font_size = font.pointSize()
+
+            if event.angleDelta().y() > 0:
+                font_size += 1
+            else:
+                font_size -= 1
+
+            if font_size > 0:  # Garante que o tamanho da fonte não seja negativo
+                font.setPointSize(font_size)
+                self.content_widget.setFont(font)
+        elif self.content_type == "pdf" and event.modifiers() == Qt.KeyboardModifier.ControlModifier:
             delta = event.angleDelta().y()
             if delta > 0:
                 self.zoom_in()
             else:
                 self.zoom_out()
-            event.accept()  # Indica que o evento foi tratado
+            event.accept()
         else:
-            super().wheelEvent(event)  # Chama o comportamento padrão
+            super().wheelEvent(event)
 
 
 class TroubleshootingWidget(QWidget):
@@ -273,19 +285,15 @@ class TroubleshootingWidget(QWidget):
                 process_name = lines[0].strip() if len(lines) >= 1 else os.path.basename(file_path)[:-4]
                 description = lines[1].strip() if len(lines) >= 2 else "Sem descrição disponível"
                 content = ''.join(lines[2:]) if len(lines) > 2 else ""
-                print(f"Conteúdo lido do arquivo: {content}")
 
-                # Processa o conteúdo para substituir tags de estilo e imagem
                 def replace_image(match):
                     image_path = match.group(1)
                     abs_path = os.path.join(os.path.dirname(file_path), image_path)
-                    print(f"Substituindo imagem: {image_path} -> {abs_path}")
                     return f'<img src="{abs_path}" />' if os.path.exists(abs_path) else f'[Imagem não encontrada: {image_path}]'
 
                 def replace_styles(match):
                     styles = match.group(1).split(':')
                     text = match.group(2)
-                    print(f"Substituindo estilos: {styles} -> {text}")
                     css_styles = []
                     is_block = False
                     for style in styles:
@@ -318,7 +326,6 @@ class TroubleshootingWidget(QWidget):
                 content = re.sub(r'\[style:(.*?)\](.*?)\[\/style\]', replace_styles, content, flags=re.DOTALL)
                 content = re.sub(r'\[image:(.*?)\]', replace_image, content)
                 content = content.replace('\n', '<br>')
-                print(f"HTML Completo: {content[:500]}...")
 
                 self.processes.append({
                     "name": process_name,
