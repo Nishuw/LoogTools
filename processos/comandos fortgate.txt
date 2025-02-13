@@ -1,6 +1,7 @@
 Comandos
 FortiGate
 
+get system interface physical ===== exibe um resumo das interfaces físicas do firewall, incluindo informações essenciais como.
 get system arp ========= Listar tabela ARP do sistema
 get system interface - Esse comando fornece uma visão geral das interfaces de rede no dispositivo
 show system interface - Esse comando fornece uma visão geral das interfaces de rede no dispositivo / formata a visualização
