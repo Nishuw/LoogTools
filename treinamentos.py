@@ -1,14 +1,18 @@
 import os
 import re
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QLineEdit, QTableWidget, QTableWidgetItem,
-    QSplitter, QScrollArea, QTextBrowser, QLabel, QFrame, QPushButton, QHBoxLayout, QSlider, QApplication
+    QWidget, QVBoxLayout, QLineEdit, QTableWidget,
+    QTableWidgetItem, QSplitter, QScrollArea, QTextBrowser, QLabel,
+    QFrame, QPushButton, QHBoxLayout, QSlider, QApplication
 )
 from PyQt6.QtCore import Qt, QUrl, QTimer, pyqtSignal
 from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PyQt6.QtMultimediaWidgets import QVideoWidget
 from PyQt6.QtGui import QKeySequence, QShortcut, QPixmap
-
+# Imports adicionais para lidar com PDFs
+from PyQt6.QtPdfWidgets import QPdfView
+from PyQt6.QtPdf import QPdfDocument
+from utils import zoom_in, zoom_out  # Importe as funções zoom_in e zoom_out
 
 class SearchOverlay(QFrame):
     def __init__(self, content_viewer=None):
@@ -53,7 +57,7 @@ class SearchOverlay(QFrame):
             self.content_viewer.clear_highlights()
 
     def handle_search(self):
-        if self.content_viewer:
+        if self.content_viewer and self.content_viewer.content_type == "text":  # Aplica filtro apenas em texto
             self.content_viewer.highlight_search(self.search_input.text())
 
 
@@ -88,7 +92,6 @@ class ContentViewer(QScrollArea):
         self.video_widget = None
         self.audio_player = QMediaPlayer()
         self.is_fullscreen = False
-        # self.is_theater_mode = False #Removido
         self.setup_ui()
 
         self.timer = QTimer()
@@ -96,7 +99,7 @@ class ContentViewer(QScrollArea):
         self.timer.timeout.connect(self.update_position)
 
         self.current_file_path = None  # Armazena o caminho do arquivo atualmente carregado
-        # self.current_audio_player = None  # Add this line to store the current audio player #Removido
+        self.content_type = None  # Tipo de conteúdo exibido (text ou pdf)
 
     def setup_ui(self):
         self.setWidgetResizable(True)
@@ -108,33 +111,39 @@ class ContentViewer(QScrollArea):
         self.search_overlay.hide()
         self.layout.addWidget(self.search_overlay, alignment=Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop)
 
+        # Text Browser para conteúdos de texto
         self.content_widget = QTextBrowser()
         self.content_widget.setOpenExternalLinks(True)
         self.content_widget.setOpenLinks(False)
-        # self.content_widget.anchorClicked.connect(self._handle_link_click) #Removido
-
         self.content_widget.setStyleSheet("""
             QTextBrowser {
                 background-color: white;
                 padding: 10px;
+                white-space: pre-wrap; /* Importante para exibir quebras de linha */
             }
         """)
+
+        # PDF View para conteúdos PDF
+        self.pdf_view = QPdfView(self)
+        self.pdf_view.setVisible(False)
+        self.pdf_document = QPdfDocument(self)
+
+        # Adiciona os widgets ao layout
         self.layout.addWidget(self.content_widget)
+        self.layout.addWidget(self.pdf_view)
+
         self.setWidget(self.container)
 
+        # Ativar funcionalidade de zoom com Ctrl+roda do mouse
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)  # Garante que o widget receba foco
         self.shortcut = QShortcut(QKeySequence("Ctrl+F"), self)
         self.shortcut.activated.connect(self.toggle_search)
-
         self.original_html = ""
 
         # Esconder inicialmente os elementos de vídeo
         self.video_container = QWidget()
         self.video_container.hide()
         self.layout.addWidget(self.video_container)
-
-    # def _handle_link_click(self, url: QUrl): #Removido
-    #     # Remove this entire method. The AudioPlayerWidget handles playback.
-    #     pass
 
     def create_video_player(self):
         if self.video_widget is None:
@@ -280,29 +289,32 @@ class ContentViewer(QScrollArea):
             super().keyPressEvent(event)
 
     def toggle_search(self):
-        if self.search_overlay.isVisible():
-            self.search_overlay.clear_and_hide()
-        else:
-            self.search_overlay.show()
-            self.search_overlay.search_input.setFocus()
+        if self.content_type == "text":
+            if self.search_overlay.isVisible():
+                self.search_overlay.clear_and_hide()
+            else:
+                self.search_overlay.show()
+                self.search_overlay.search_input.setFocus()
 
     def clear_highlights(self):
-        self.content_widget.setHtml(self.original_html)
+        if self.content_type == "text":
+            self.content_widget.setHtml(self.original_html)
 
     def highlight_search(self, search_text: str):
-        self.clear_highlights()
+        if self.content_type == "text":  # Aplica filtro apenas em conteúdo de texto
+            self.clear_highlights()
 
-        if not search_text:
-            return
+            if not search_text:
+                return
 
-        highlighted_html = re.sub(
-            f"({re.escape(search_text)})",
-            r'<span style="background-color: yellow;">\1</span>',
-            self.original_html,
-            flags=re.IGNORECASE
-        )
+            highlighted_html = re.sub(
+                f"({re.escape(search_text)})",
+                r'<span style="background-color: yellow;">\1</span>',
+                self.original_html,
+                flags=re.IGNORECASE
+            )
 
-        self.content_widget.setHtml(highlighted_html)
+            self.content_widget.setHtml(highlighted_html)
 
     def load_content(self, file_name: str):
         # Se um arquivo já estava carregado, parar qualquer reprodução em andamento
@@ -311,18 +323,12 @@ class ContentViewer(QScrollArea):
             self.video_container.hide()  # Esconde o container de vídeo
             self.video_widget.hide()
 
-        # if self.current_audio_player: #Removido
-        #     self.current_audio_player.stop()
-        #     self.current_audio_player.cleanup()
-        #     self.current_audio_player.deleteLater()
-        #     self.current_audio_player = None
-
-        # Criar o player de vídeo se ainda não existir
         self.create_video_player()
 
         base_path = os.path.join(os.path.dirname(__file__), "Treinamentos")
         text_folder = os.path.join(base_path, "Textos treinamentos")
         video_folder = os.path.join(base_path, "Videos treinamentos")
+        pdf_folder = os.path.join(base_path, "PDFs treinamentos")  # Caminho da pasta PDF
 
         file_path = os.path.join(text_folder, file_name)
         if not os.path.exists(file_path):
@@ -347,11 +353,21 @@ class ContentViewer(QScrollArea):
 
                         # Remover a tag de vídeo do conteúdo
                         content = re.sub(r'\[video:.*?\]', '', content)
+            # Verificar se há tag de PDF
+            pdf_match = re.search(r'\[pdf:(.*?)\]', content)
+            if pdf_match:
+                pdf_filename = pdf_match.group(1)
+                pdf_path = os.path.join(pdf_folder, pdf_filename) # Caminho completo do PDF
 
-            processed_content = self.process_content(self,content, base_path)  # content_viewer Removido
+                if os.path.exists(pdf_path):
+                    self.load_pdf(pdf_path)
+                    return  # Impede o carregamento de conteúdo de texto
+                else:
+                    content = f"[PDF não encontrado: {pdf_filename}]"  # Exibe mensagem de erro
 
-            self.original_html = processed_content
-            self.content_widget.setHtml(self.original_html)
+            processed_content = self.process_content(content, base_path)
+
+            self.load_text_content(processed_content)  # Carrega o conteúdo de texto
 
         except Exception as e:
             self.content_widget.setText(f"Erro ao carregar arquivo: {str(e)}")
@@ -366,7 +382,7 @@ class ContentViewer(QScrollArea):
             self.audio_player.stop()
         self.timer.stop()  # Para o timer de atualização da posição do vídeo
 
-    def process_content(self,content_viewer,content: str, base_path: str) -> str:
+    def process_content(self, content: str, base_path: str) -> str:
         """Processa o conteúdo, substituindo tags de imagem com HTML apropriado."""
         image_folder = os.path.join(base_path, "Imagens treinamentos")
 
@@ -376,8 +392,62 @@ class ContentViewer(QScrollArea):
 
         # Substituições no conteúdo
         content = re.sub(r'\[image:(.*?)\]', replace_image, content)
-        # Removido: content = re.sub(r'\[audio:(.*?)\]', replace_audio, content)
+        content = re.sub(r'\[pdf:(.*?)\]', self.replace_pdf, content) # Substituição da tag PDF
         return content.replace('\n', '<br>')
+
+    def replace_pdf(self, match):
+        """Substitui a tag [pdf] com uma chamada para exibir o PDF."""
+        pdf_path = match.group(1)  # Obtém o caminho do PDF
+        # Se necessário, você pode aqui verificar se o arquivo existe
+        return f'<pdf_src>{pdf_path}</pdf_src>'  # Use uma tag personalizada para indicar o PDF
+
+    def load_text_content(self, content: str):
+        """Carrega conteúdo de texto no QTextBrowser e aplica as substituições."""
+        self.content_widget.setVisible(True)
+        self.pdf_view.setVisible(False)
+        self.content_type = "text"
+        self.search_overlay.show()
+        self.original_html = content
+        self.content_widget.setHtml(self.original_html)
+
+    def load_pdf(self, file_path: str):
+        """Carrega um arquivo PDF no QPdfView."""
+        self.content_widget.setVisible(False)
+        self.pdf_view.setVisible(True)
+        self.content_type = "pdf"
+        self.search_overlay.hide()  # Esconde a barra de pesquisa em PDFs
+
+        try:
+            self.pdf_document.load(file_path)
+            self.pdf_view.setDocument(self.pdf_document)
+        except Exception as e:
+            self.content_widget.setText(f"Erro ao carregar PDF: {str(e)}")
+            self.content_widget.setVisible(True)
+            self.pdf_view.setVisible(False)
+            self.content_type = "text"
+
+    def wheelEvent(self, event):
+        if self.content_type == "text" and event.modifiers() == Qt.KeyboardModifier.ControlModifier:  # Adicionada condição para o tipo texto
+            font = self.content_widget.font()
+            font_size = font.pointSize()
+
+            if event.angleDelta().y() > 0:
+                font_size += 1
+            else:
+                font_size -= 1
+
+            if font_size > 0:  # Garante que o tamanho da fonte não seja negativo
+                font.setPointSize(font_size)
+                self.content_widget.setFont(font)
+        elif self.content_type == "pdf" and event.modifiers() == Qt.KeyboardModifier.ControlModifier:
+            delta = event.angleDelta().y()
+            if delta > 0:
+                zoom_in(self.pdf_view)
+            else:
+                zoom_out(self.pdf_view)
+            event.accept()
+        else:
+            super().wheelEvent(event)
 
 
 class TreinamentosWidget(QWidget):

@@ -32,16 +32,12 @@ def setup_widget_layout(widget: QWidget) -> QVBoxLayout:
     widget.setLayout(layout)
     return layout
 
-# ATUALIZAÇÃO NECESSÁRIA no navigation.py para incluir as novas abas
-def load_telefonia_tabs(self):
-    from codigos_sip import CodigosSIPWidget
-    from telefonia import TelefoniaWidget
-    from coleta_logs_telefonia import ColetaDeLogsWidget # Importe a classe aqui
+def zoom_in(pdf_view):
+    """Zooms in the PDF view."""
+    current_zoom = pdf_view.zoomFactor()
+    pdf_view.setZoomFactor(current_zoom + 0.1)
 
-    # Adiciona aba Códigos SIP
-    codigos_sip_widget = CodigosSIPWidget()
-    self.tab_widget.addTab(codigos_sip_widget, "Códigos SIP")
-
-    # Adiciona aba Telefonia
-    telefonia_widget = TelefoniaWidget()
-    self.tab_widget.addTab(telefonia_widget, "Telefonia")
+def zoom_out(pdf_view):
+    """Zooms out the PDF view."""
+    current_zoom = pdf_view.zoomFactor()
+    pdf_view.setZoomFactor(current_zoom - 0.1)

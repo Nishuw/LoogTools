@@ -1,4 +1,0 @@
-Fluxograma ativação 
-Roteador do cliente “CPE”
-
-[pdf:pdfs/FAR_CPE_1.pdf]

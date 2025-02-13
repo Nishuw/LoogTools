@@ -100,7 +100,7 @@ class MainWindow(QMainWindow):
         button_icons = {
             "CPE/GAT": os.path.join('icones', 'cpe_gat.png'),
             # "Scripts": os.path.join('icones', 'scripts.png'),
-            # "Treinamentos": os.path.join('icones', 'treinamentos.png'),
+             "Treinamentos": os.path.join('icones', 'treinamentos.png'),
             "Telefonia": os.path.join('icones', 'telefonia.png'),
             "Troubleshooting": os.path.join('icones', 'troubleshooting.png')
         }
@@ -108,7 +108,7 @@ class MainWindow(QMainWindow):
         buttons = {
             "CPE/GAT": self.open_cpe_gat,
             # "Scripts": self.open_scripts,
-            # "Treinamentos": self.open_treinamentos,
+             "Treinamentos": self.open_treinamentos,
             "Telefonia": self.open_telefonia,
             "Troubleshooting": self.open_troubleshooting
         }
@@ -212,8 +212,8 @@ class MainWindow(QMainWindow):
     def open_cpe_gat(self):
         self.open_navigation_window("cpe_gat")
 
-    # def open_treinamentos(self):
-    # self.open_navigation_window("treinamentos")
+    def open_treinamentos(self):
+        self.open_navigation_window("treinamentos")
 
     # def open_scripts(self):
     # self.open_navigation_window("scripts")

@@ -9,7 +9,7 @@ from telefonia import TelefoniaWidget
 from coleta_logs_telefonia import ColetaDeLogsWidget
 from troubleshooting import TroubleshootingWidget
 #from scripts import ScriptWidget
-#from treinamentos import TreinamentosWidget
+from treinamentos import TreinamentosWidget
 from PyQt6.QtGui import QPixmap, QIcon  # Import QIcon
 from certidao import CertidaoWidget 
 
@@ -84,7 +84,7 @@ class NavigationWindow(QMainWindow):
     def load_tabs(self, window_type: str):
         tab_loaders = {
             "cpe_gat": self.load_cpe_gat_tabs,
-            #"treinamentos": self.load_treinamentos_tabs,
+            "treinamentos": self.load_treinamentos_tabs,
             #"scripts": self.load_scripts_tabs,
             "telefonia": self.load_telefonia_tabs,
             "troubleshooting": self.load_troubleshooting_tabs
@@ -105,8 +105,8 @@ class NavigationWindow(QMainWindow):
     #def load_scripts_tabs(self):
        # self.add_tab(ScriptWidget(), "Scripts")  # Nova função para carregar a aba de scripts
 
-    #def load_treinamentos_tabs(self):
-        #self.add_tab(TreinamentosWidget(), "Treinamentos")
+    def load_treinamentos_tabs(self):
+        self.add_tab(TreinamentosWidget(), "Treinamentos")
 
     def load_telefonia_tabs(self):
         self.add_tab(TelefoniaWidget(), "Telefonia")
