@@ -1,0 +1,36 @@
+Router 
+Liberar memória nos HPs antigos
+
+[style:bold:center]Liberar memória nos HPs antigos[/style]
+
+
+[style:left] 
+<PEDTRODIST_BLD>dir
+Directory of flash:
+   0 -rw-    67390464 Dec 31 2010 21:11:51   MSR100X-CMW710-R0306P82.IPE
+   1 -rw-    57053184 Dec 31 2010 21:08:57   MSR3000-CMW710-R0306P82.IPE
+   2 drw-           - Sep 25 2024 18:08:03   diagfile
+   3 -rw-         735 Dec 31 2010 21:40:23   hostkey
+   4 -rw-         267 Jan 20 2025 09:08:54   ifindex.dat
+   5 drw-           - Dec 31 2010 21:00:12   license
+   6 drw-           - Mar 12 2024 09:34:39   logfile
+   7 -rw-     6204416 Dec 31 2010 21:00:00   msr100x-cmw710-boot-r0306p30.bin
+   8 -rw-     6204416 Dec 31 2010 21:12:10   msr100x-cmw710-boot-r0306p82.bin
+   9 -rw-     3358720 Dec 31 2010 21:00:00   msr100x-cmw710-data-r0306p30.bin
+  10 -rw-     3358720 Dec 31 2010 21:12:42   msr100x-cmw710-data-r0306p82.bin
+  11 -rw-      390144 Dec 31 2010 21:00:00   msr100x-cmw710-security-r0306p30.bin
+  12 -rw-      390144 Dec 31 2010 21:12:39   msr100x-cmw710-security-r0306p82.bin
+  13 -rw-    55475200 Dec 31 2010 21:00:00   msr100x-cmw710-system-r0306p30.bin
+  14 -rw-    55629824 Dec 31 2010 21:12:39   msr100x-cmw710-system-r0306p82.bin
+  15 -rw-     1797120 Dec 31 2010 21:00:00   msr100x-cmw710-voice-r0306p30.bin
+  16 -rw-     1799168 Dec 31 2010 21:12:40   msr100x-cmw710-voice-r0306p82.bin
+  17 drw-           - Dec 31 2010 21:00:12   seclog
+  18 -rw-         591 Dec 31 2010 21:40:24   serverkey
+  19 -rw-        3468 Jan 20 2025 08:42:12   startup.cfg
+  20 -rw-       63632 Jan 20 2025 08:42:13   startup.mdb
+ 
+262144 KB total (0 KB free)
+ 
+<PEDTRODIST_BLD>
+<PEDTRODIST_BLD>[/style]
+

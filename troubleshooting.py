@@ -7,7 +7,6 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, QPoint, QUrl
 from PyQt6.QtGui import QKeySequence, QShortcut, QTextCharFormat, QColor, QDesktopServices, QWheelEvent
-# Import adicional para lidar com PDFs
 from PyQt6.QtPdfWidgets import QPdfView
 from PyQt6.QtPdf import QPdfDocument
 
@@ -267,7 +266,7 @@ class TroubleshootingWidget(QWidget):
         splitter.setSizes([300, 700])
 
     def load_processes(self):
-        base_path = os.path.join(os.path.dirname(__file__), "processos")
+        base_path = os.path.join(os.path.dirname(__file__), "processos/Textos Processos")
         if not os.path.exists(base_path):
             return
 
