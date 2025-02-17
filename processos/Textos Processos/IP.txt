@@ -13,7 +13,7 @@ diferentes com o comando “ | inc ”
 - Com a interface do Backbone. (sh run | inc “interface do PE”)
 Neste exemplo a duplicidade está na rota (mesmo PE), com a interface duplicando.
 
-[image:imagens/IRD_image_1.png]
+[image:IRD_image_1.png]
 
 
 Caso não esteja no mesmo Backbone a duplicidade, deve-se procurar com o comando “show 
@@ -23,15 +23,15 @@ Observe que a interface está desabilitada, e o roteamento informa que este IP e
 Backbone.
 
 
-[image:imagens/IRD_image_2.png]
+[image:IRD_image_2.png]
 
 
 Com o IP conhecido (Loopback 0 do PE de origem), consegue-se realizar o “Telnet” 
 para o Backbone no qual está aprendendo na tabela de roteamento. 
 
-[image:imagens/IRD_image_3.png]
+[image:IRD_image_3.png]
 
 Realizado o acesso ao Backbone que origina o IP, verifica-se novamente o roteamento 
 para encontrar a interface duplicada.
 
-[image:imagens/IRD_image_4.png]    
+[image:IRD_image_4.png]    

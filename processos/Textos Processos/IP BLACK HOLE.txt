@@ -25,9 +25,9 @@ e IACC a Community 4230:10001 está aplicada no Community-list BLACKHOLE-NAC-EBT
  Nos PEs teremos a route-map RR_IPV4_IN que irá alterar o next-hop para 
 200.10.159.254
 
-[image:imagens/IBH_image_1.png]
-[image:imagens/IBH_image_2.png]
-[image:imagens/IBH_image_3.png]
-[image:imagens/IBH_image_4.png]
-[image:imagens/IBH_image_5.png]
-[image:imagens/IBH_image_6.png]
+[image:IBH_image_1.png]
+[image:IBH_image_2.png]
+[image:IBH_image_3.png]
+[image:IBH_image_4.png]
+[image:IBH_image_5.png]
+[image:IBH_image_6.png]

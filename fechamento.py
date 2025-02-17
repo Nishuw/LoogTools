@@ -142,26 +142,24 @@ class Fechamento(QWidget):
         formatted_text = ""
 
         if comentario:
-            formatted_text += "===== Comentário de Fechamento =====\n"
-            formatted_text += f"{comentario}\n"
+            formatted_text += "===== Comentário de Fechamento =====\n\n"
+            formatted_text += f"{comentario}\n\n"
+
             if equip_status == "Sim":
-                formatted_text += f"Técnico possui JDSU ou Wise? Sim\n"
-                formatted_text += f"Resultado do teste: {result_status}\n"
+                formatted_text += "Técnico possui JDSU ou Wise? Sim\n\n"
+                formatted_text += f"Resultado do teste: {result_status}\n\n"
             elif equip_status == "Não":
-                 formatted_text += f"Técnico possui JDSU ou Wise? Não\n"
+                formatted_text += "Técnico possui JDSU ou Wise? Não\n\n"
             elif equip_status == "Cliente não autorizou":
-                 formatted_text +=  "Situação: Cliente não autorizou\n"
+                formatted_text += "Situação: Cliente não autorizou\n\n"
             elif equip_status == "Atividade IPVPN ou Voz":
-                 formatted_text += "Atividade IPVPN ou Voz\n"
+                formatted_text += "Atividade IPVPN ou Voz\n\n"
             elif equip_status == "Projeto Visita única":
-                 formatted_text += "Situação: Projeto Visita Única\n"
+                formatted_text += "Situação: Projeto Visita Única\n\n"
 
-
-        if responsavel:
-            formatted_text += "===== Responsável pela validação =====\n"
-            formatted_text += f"{responsavel}\n"
-
-
+            if responsavel:
+                formatted_text += "===== Responsável pela validação =====\n\n"
+            formatted_text += f"{responsavel}\n\n"
 
         self.resultado.setPlainText(formatted_text)
         return formatted_text

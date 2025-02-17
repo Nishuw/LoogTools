@@ -76,8 +76,10 @@ class ContentViewer(QScrollArea):
         self.search_overlay.hide()
         layout.addWidget(self.search_overlay, alignment=Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop)
 
-        self.content_widget = QTextBrowser()  # Revertendo para QTextBrowser
+        self.content_widget = QTextBrowser()
         self.content_widget.setOpenExternalLinks(False)
+        # Configurar o QTextBrowser para lidar com recursos locais
+        self.content_widget.setOpenLinks(False)
         self.content_widget.setStyleSheet("""
             QTextBrowser {
                 background-color: white;
@@ -205,7 +207,7 @@ class ContentViewer(QScrollArea):
             self.pdf_view.setZoomFactor(current_zoom - 0.1)
 
     def wheelEvent(self, event: QWheelEvent):
-        if self.content_type == "text" and event.modifiers() == Qt.KeyboardModifier.ControlModifier:  # Adicionada condição para o tipo texto
+        if self.content_type == "text" and event.modifiers() == Qt.KeyboardModifier.ControlModifier:
             font = self.content_widget.font()
             font_size = font.pointSize()
 
@@ -214,7 +216,7 @@ class ContentViewer(QScrollArea):
             else:
                 font_size -= 1
 
-            if font_size > 0:  # Garante que o tamanho da fonte não seja negativo
+            if font_size > 0:
                 font.setPointSize(font_size)
                 self.content_widget.setFont(font)
         elif self.content_type == "pdf" and event.modifiers() == Qt.KeyboardModifier.ControlModifier:
@@ -266,8 +268,9 @@ class TroubleshootingWidget(QWidget):
         splitter.setSizes([300, 700])
 
     def load_processes(self):
-        base_path = os.path.join(os.path.dirname(__file__), "processos/Textos Processos")
+        base_path = os.path.join(os.path.dirname(__file__), "processos", "Textos Processos")
         if not os.path.exists(base_path):
+            print(f"Diretório não encontrado: {base_path}")  # Debug
             return
 
         for filename in os.listdir(base_path):
@@ -285,10 +288,20 @@ class TroubleshootingWidget(QWidget):
                 description = lines[1].strip() if len(lines) >= 2 else "Sem descrição disponível"
                 content = ''.join(lines[2:]) if len(lines) > 2 else ""
 
+                # Configurar o caminho base para as imagens
+                images_base_path = os.path.join(os.path.dirname(os.path.dirname(file_path)), "imagens")
+                print(f"Caminho base das imagens: {images_base_path}")  # Debug
+
                 def replace_image(match):
                     image_path = match.group(1)
-                    abs_path = os.path.join(os.path.dirname(file_path), image_path)
-                    return f'<img src="{abs_path}" />' if os.path.exists(abs_path) else f'[Imagem não encontrada: {image_path}]'
+                    abs_path = os.path.join(images_base_path, image_path)
+                    print(f"Tentando carregar imagem: {abs_path}")  # Debug
+                    if os.path.exists(abs_path):
+                        # Usar o caminho com file:/// para garantir que o QTextBrowser possa carregar
+                        return f'<img src="file:///{abs_path.replace(os.sep, "/")}" />'
+                    else:
+                        print(f"Imagem não encontrada: {abs_path}")  # Debug
+                        return f'[Imagem não encontrada: {image_path}]'
 
                 def replace_styles(match):
                     styles = match.group(1).split(':')
@@ -333,7 +346,7 @@ class TroubleshootingWidget(QWidget):
                     "content": content
                 })
         except Exception as e:
-            print(e)
+            print(f"Erro ao processar arquivo {file_path}: {e}")  # Debug
             self.processes.append({
                 "name": os.path.basename(file_path)[:-4],
                 "description": "Erro ao carregar descrição",
@@ -361,4 +374,5 @@ class TroubleshootingWidget(QWidget):
             content = self.processes[row]["content"]
             self.content_viewer.clear_content()
             self.content_viewer.set_base_path(os.path.dirname(file_path))
-            self.content_viewer.process_and_display(content)
+            self.content_viewer.process_and_display(content)                        
+
