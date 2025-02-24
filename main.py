@@ -215,8 +215,8 @@ class MainWindow(QMainWindow):
     def open_treinamentos(self):
         self.open_navigation_window("treinamentos")
 
-    # def open_scripts(self):
-    # self.open_navigation_window("scripts")
+    #def open_scripts(self):
+       #self.open_navigation_window("scripts")
 
     def open_telefonia(self):
         self.open_navigation_window("telefonia")

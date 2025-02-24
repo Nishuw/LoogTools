@@ -5,7 +5,7 @@ Liberar memória nos HPs antigos
 
 
 [style:left] 
-<PEDTRODIST_BLD>dir
+<PEDTRODIST_BLD> dir
 Directory of flash:
    0 -rw-    67390464 Dec 31 2010 21:11:51   MSR100X-CMW710-R0306P82.IPE
    1 -rw-    57053184 Dec 31 2010 21:08:57   MSR3000-CMW710-R0306P82.IPE
