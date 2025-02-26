@@ -1,3 +1,4 @@
+# fechamento.py
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QTextEdit, QPushButton, QHBoxLayout, QButtonGroup, QRadioButton, QMessageBox
 )
@@ -5,24 +6,26 @@ from PyQt6.QtGui import QGuiApplication
 from PyQt6.QtCore import Qt
 
 class Fechamento(QWidget):
-    def __init__(self):
+    def __init__(self, dark_mode=False):
         super().__init__()
+        self.dark_mode = dark_mode
         self.init_ui()
+        self.update_theme()
 
     def init_ui(self):
         layout = QVBoxLayout()
         self.setLayout(layout)
 
-        self.comentario = self.create_text_field("Comentário de Fechamento:", layout, 50)
-        self.responsavel = self.create_text_field("Nome do Responsável:", layout, 50)
+        self.comentario = self.create_text_field("Comentário de Fechamento:", layout, 50, dark_mode=self.dark_mode)
+        self.responsavel = self.create_text_field("Nome do Responsável:", layout, 50, dark_mode=self.dark_mode)
 
         self.equip_group = self.create_radio_group("Técnico possui equipamento JDSU ou Wise?", [
             "Sim", "Não", "Cliente não autorizou", "Atividade IPVPN ou Voz", "Projeto Visita única"
-        ], layout)
+        ], layout, dark_mode=self.dark_mode)
 
         self.result_group = self.create_radio_group("Resultado do teste:", [
             "Sucesso JDSU", "Falha JDSU", "Sucesso Wise", "Falha Wise"
-        ], layout)
+        ], layout, dark_mode=self.dark_mode)
 
         button_layout = QHBoxLayout()
         button_layout.addWidget(self.create_button("Limpar", self.limpar_campos))
@@ -30,43 +33,61 @@ class Fechamento(QWidget):
         button_layout.addWidget(self.create_button("Formatar & Copiar", self.formatar_e_copiar))
         layout.addLayout(button_layout)
 
-        self.resultado = self.create_output_field(layout)
+        self.resultado = self.create_output_field(layout, dark_mode=self.dark_mode)
 
         self.setup_tab_navigation([
             self.comentario, self.responsavel, self.resultado
         ])
 
-    def create_text_field(self, label_text: str, parent_layout: QVBoxLayout, height: int) -> QTextEdit:
+    def create_text_field(self, label_text: str, parent_layout: QVBoxLayout, height: int, dark_mode=False) -> QTextEdit:
         parent_layout.addWidget(QLabel(label_text))
         text_field = QTextEdit()
         text_field.setMaximumHeight(height)
-        text_field.setStyleSheet("""
-            QTextEdit {
-                background-color: white;
-                color: black;
-                border: 1px solid gray;
-                padding: 5px;
-            }
-        """)
+
+        if dark_mode:
+            text_field.setStyleSheet("""
+                QTextEdit {
+                    background-color: #333333;
+                    color: #DDDDDD;
+                    border: 1px solid gray;
+                    padding: 5px;
+                }
+            """)
+        else:
+            text_field.setStyleSheet("""
+                QTextEdit {
+                    background-color: white;
+                    color: black;
+                    border: 1px solid gray;
+                    padding: 5px;
+                }
+            """)
+
         parent_layout.addWidget(text_field)
         return text_field
 
-    def create_radio_group(self, label_text: str, options: list[str], parent_layout: QVBoxLayout) -> QButtonGroup:
+    def create_radio_group(self, label_text: str, options: list[str], parent_layout: QVBoxLayout, dark_mode=False) -> QButtonGroup:
         parent_layout.addWidget(QLabel(label_text))
         group = QButtonGroup()
         layout = QHBoxLayout()
 
         for i, text in enumerate(options):
             radio = QRadioButton(text)
-            radio.setStyleSheet("""
-                QRadioButton {
-                    color: black;
-                }
-            """)
+            if dark_mode:
+                radio.setStyleSheet("""
+                    QRadioButton {
+                        color: #DDDDDD;
+                    }
+                """)
+            else:
+                radio.setStyleSheet("""
+                    QRadioButton {
+                        color: black;
+                    }
+                """)
             group.addButton(radio, i)
             layout.addWidget(radio)
-
-        parent_layout.addLayout(layout)
+        parent_layout.addLayout(layout)  # Adiciona o layout ao pai
         return group
 
     def create_button(self, text: str, callback) -> QPushButton:
@@ -91,19 +112,30 @@ class Fechamento(QWidget):
         """)
         return button
 
-    def create_output_field(self, parent_layout: QVBoxLayout) -> QTextEdit:
-        parent_layout.addWidget(QLabel("Resultado:"))
+    def create_output_field(self, parent_layout: QVBoxLayout, dark_mode=False) -> QTextEdit:
         output = QTextEdit()
         output.setReadOnly(True)
         output.setMinimumHeight(150)
-        output.setStyleSheet("""
-            QTextEdit {
-                background-color: white;
-                color: black;
-                border: 1px solid gray;
-                padding: 2px;
-            }
-        """)
+
+        if dark_mode:
+            output.setStyleSheet("""
+                QTextEdit {
+                    background-color: #333333;
+                    color: #DDDDDD;
+                    border: 1px solid gray;
+                    padding: 5px;
+                }
+            """)
+        else:
+            output.setStyleSheet("""
+                QTextEdit {
+                    background-color: white;
+                    color: black;
+                    border: 1px solid gray;
+                    padding: 5px;
+                }
+            """)
+
         parent_layout.addWidget(output)
         return output
 
@@ -174,3 +206,52 @@ class Fechamento(QWidget):
     def get_radio_selection(self, group: QButtonGroup) -> str:
         selected = group.checkedButton()
         return selected.text() if selected else "Não informado"
+
+    def update_theme(self):
+        for child in self.findChildren(QTextEdit):
+            if self.dark_mode:
+                child.setStyleSheet("""
+                    QTextEdit {
+                        background-color: #333333;
+                        color: #DDDDDD;
+                        border: 1px solid gray;
+                        padding: 5px;
+                    }
+                """)
+            else:
+                child.setStyleSheet("""
+                    QTextEdit {
+                        background-color: white;
+                        color: black;
+                        border: 1px solid gray;
+                        padding: 5px;
+                    }
+                """)
+
+        for child in self.findChildren(QRadioButton):
+            if self.dark_mode:
+                child.setStyleSheet("""
+                    QRadioButton {
+                        color: #DDDDDD;
+                    }
+                """)
+            else:
+                child.setStyleSheet("""
+                    QRadioButton {
+                        color: black;
+                    }
+                """)
+
+        for child in self.findChildren(QLabel):
+            if self.dark_mode:
+                child.setStyleSheet("""
+                    QLabel {
+                        color: #DDDDDD;
+                    }
+                """)
+            else:
+                child.setStyleSheet("""
+                    QLabel {
+                        color: black;
+                    }
+                """)

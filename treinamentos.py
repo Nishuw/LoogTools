@@ -1,3 +1,4 @@
+# treinamentos.py
 import os
 import re
 from PyQt6.QtWidgets import (
@@ -14,6 +15,7 @@ from PyQt6.QtPdfWidgets import QPdfView
 from PyQt6.QtPdf import QPdfDocument
 from utils import zoom_in, zoom_out  # Importe as funções zoom_in e zoom_out
 
+
 class SearchOverlay(QFrame):
     def __init__(self, content_viewer=None):
         super().__init__()
@@ -27,13 +29,18 @@ class SearchOverlay(QFrame):
 
         self.search_input = QLineEdit(self)
         self.search_input.setPlaceholderText("Buscar no texto...")
+        self.search_input.setObjectName("searchTroubleshootingInput")  # Definindo nome para estilização
         self.search_input.setStyleSheet("""
-            QLineEdit {
+            QLineEdit#searchTroubleshootingInput {
                 background-color: white;
                 border: 1px solid gray;
                 border-radius: 4px;
                 padding: 4px;
                 max-width: 200px;
+                color: black; /* Cor do texto */
+            }
+            QLineEdit#searchTroubleshootingInput::placeholder {
+                color: #777777; /* Cor do placeholder (cinza mais escuro) */
             }
         """)
         layout.addWidget(self.search_input)
@@ -57,7 +64,7 @@ class SearchOverlay(QFrame):
             self.content_viewer.clear_highlights()
 
     def handle_search(self):
-        if self.content_viewer and self.content_viewer.content_type == "text":  # Aplica filtro apenas em texto
+        if self.content_viewer and self.content_viewer.content_type == "text":
             self.content_viewer.highlight_search(self.search_input.text())
 
 
@@ -104,33 +111,40 @@ class ContentViewer(QScrollArea):
     def setup_ui(self):
         self.setWidgetResizable(True)
         self.container = QWidget()
-        self.layout = QVBoxLayout(self.container)
-        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.container.setObjectName("treinamentosViewerContainer")  # Definindo nome para estilização
+
+        layout = QVBoxLayout(self.container)
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.main_layout = layout
+        self.container_layout = layout #Definir container
 
         self.search_overlay = SearchOverlay(content_viewer=self)
         self.search_overlay.hide()
-        self.layout.addWidget(self.search_overlay, alignment=Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop)
+        layout.addWidget(self.search_overlay, alignment=Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop)
 
         # Text Browser para conteúdos de texto
         self.content_widget = QTextBrowser()
         self.content_widget.setOpenExternalLinks(True)
         self.content_widget.setOpenLinks(False)
+        self.content_widget.setObjectName("treinamentosContentBrowser")  # Definindo nome para estilização
         self.content_widget.setStyleSheet("""
-            QTextBrowser {
+            QTextBrowser#treinamentosContentBrowser {
                 background-color: white;
                 padding: 10px;
                 white-space: pre-wrap; /* Importante para exibir quebras de linha */
+                color: black;
             }
         """)
 
         # PDF View para conteúdos PDF
-        self.pdf_view = QPdfView(self)
+        self.pdf_view = QPdfView(self.container)
+        self.pdf_view.setObjectName("treinamentosPdfView")  # Definindo nome para estilização
         self.pdf_view.setVisible(False)
-        self.pdf_document = QPdfDocument(self)
+        self.pdf_document = QPdfDocument(self.container)
 
         # Adiciona os widgets ao layout
-        self.layout.addWidget(self.content_widget)
-        self.layout.addWidget(self.pdf_view)
+        layout.addWidget(self.content_widget)
+        layout.addWidget(self.pdf_view)
 
         self.setWidget(self.container)
 
@@ -143,7 +157,7 @@ class ContentViewer(QScrollArea):
         # Esconder inicialmente os elementos de vídeo
         self.video_container = QWidget()
         self.video_container.hide()
-        self.layout.addWidget(self.video_container)
+        layout.addWidget(self.video_container)
 
     def create_video_player(self):
         if self.video_widget is None:
@@ -204,7 +218,7 @@ class ContentViewer(QScrollArea):
 
             video_layout.addWidget(self.controls_widget)
 
-            self.layout.addWidget(self.video_container)
+            self.container_layout.addWidget(self.video_container)
 
             # Conectar sinais
             self.video_player.playbackStateChanged.connect(self.update_play_button)
@@ -357,7 +371,7 @@ class ContentViewer(QScrollArea):
             pdf_match = re.search(r'\[pdf:(.*?)\]', content)
             if pdf_match:
                 pdf_filename = pdf_match.group(1)
-                pdf_path = os.path.join(pdf_folder, pdf_filename) # Caminho completo do PDF
+                pdf_path = os.path.join(pdf_folder, pdf_filename)  # Caminho completo do PDF
 
                 if os.path.exists(pdf_path):
                     self.load_pdf(pdf_path)
@@ -392,7 +406,7 @@ class ContentViewer(QScrollArea):
 
         # Substituições no conteúdo
         content = re.sub(r'\[image:(.*?)\]', replace_image, content)
-        content = re.sub(r'\[pdf:(.*?)\]', self.replace_pdf, content) # Substituição da tag PDF
+        content = re.sub(r'\[pdf:(.*?)\]', self.replace_pdf, content)  # Substituição da tag PDF
         return content.replace('\n', '<br>')
 
     def replace_pdf(self, match):
@@ -415,7 +429,7 @@ class ContentViewer(QScrollArea):
         self.content_widget.setVisible(False)
         self.pdf_view.setVisible(True)
         self.content_type = "pdf"
-        self.search_overlay.hide()  # Esconde a barra de pesquisa em PDFs
+        self.search_overlay.hide()
 
         try:
             self.pdf_document.load(file_path)
@@ -451,28 +465,34 @@ class ContentViewer(QScrollArea):
 
 
 class TreinamentosWidget(QWidget):
-    def __init__(self):
+    def __init__(self, dark_mode=False):
         super().__init__()
         self.treinamentos = []  # Lista de treinamentos
+        self.dark_mode = dark_mode  # Estado do modo noturno
         self.setup_ui()
         self.load_treinamentos()
+        self.apply_stylesheet()  # Aplicar tema no construtor
 
     def setup_ui(self):
         layout = QVBoxLayout()
         self.setLayout(layout)
+        self.main_layout = layout
 
         splitter = QSplitter(Qt.Orientation.Horizontal)
+        splitter.setObjectName("treinamentosSplitter")  # Definindo nome para estilização
         layout.addWidget(splitter)
 
         left_widget = QWidget()
+        left_widget.setObjectName("treinamentosLeftWidget")  # Definindo nome para estilização
         left_layout = QVBoxLayout(left_widget)
 
         self.search_input = QLineEdit()
+        self.search_input.setObjectName("treinamentosSearchInput")  # Definindo nome para estilização
         self.search_input.setPlaceholderText("Digite para filtrar treinamentos...")
-        self.search_input.textChanged.connect(self.filter_table)
         left_layout.addWidget(self.search_input)
 
         self.table = QTableWidget()
+        self.table.setObjectName("treinamentosTable")  # Definindo nome para estilização
         self.table.setColumnCount(2)
         self.table.setHorizontalHeaderLabels(["Treinamento", "Descrição"])
         self.table.horizontalHeader().setStretchLastSection(True)
@@ -482,9 +502,12 @@ class TreinamentosWidget(QWidget):
         left_layout.addWidget(self.table)
 
         self.content_viewer = ContentViewer()
+        self.content_viewer.setObjectName("treinamentosContentViewer")  # Definindo nome para estilização
+
         splitter.addWidget(left_widget)
         splitter.addWidget(self.content_viewer)
         splitter.setSizes([300, 700])
+        layout.addWidget(splitter)  # Adicionando o splitter ao layout
 
     def load_treinamentos(self):
         base_path = os.path.join(os.path.dirname(__file__), "Treinamentos", "Textos treinamentos")
@@ -534,3 +557,52 @@ class TreinamentosWidget(QWidget):
         if 0 <= row < len(self.treinamentos):
             file_path = self.treinamentos[row]["file_path"]
             self.content_viewer.load_content(os.path.basename(file_path))  # Passa apenas o nome do arquivo
+
+    def apply_stylesheet(self):
+        # Aplicar tema base
+        if self.dark_mode:
+            self.setStyleSheet("""
+                QWidget {
+                    background-color: #222222;
+                    color: #DDDDDD;
+                }
+            """)
+
+            self.search_input.setStyleSheet("""
+                QLineEdit#treinamentosSearchInput {
+                    background-color: #333333;
+                    color: #DDDDDD;
+                    border: 1px solid #555555;
+                    border-radius: 4px;
+                    padding: 4px;
+                    max-width: 200px;
+                }
+            """)
+
+            self.table.setStyleSheet("""
+                QTableWidget#treinamentosTable {
+                    background-color: #333333;
+                    color: #DDDDDD;
+                    border: 1px solid #555555;
+                }
+
+                QHeaderView::section {
+                    background-color: #333333;
+                    color: #DDDDDD;
+                    border: none;
+                }
+            """)
+        else:
+            self.setStyleSheet("")  # Limpa o estilo para o modo normal
+
+            self.search_input.setStyleSheet("""
+                QLineEdit#treinamentosSearchInput {
+                    background-color: white;
+                    border: 1px solid gray;
+                    border-radius: 4px;
+                    padding: 4px;
+                    max-width: 200px;
+                }
+            """)
+
+            self.table.setStyleSheet("")

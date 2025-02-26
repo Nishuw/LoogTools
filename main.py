@@ -1,9 +1,11 @@
+# main.py
+
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QTextEdit, QPushButton,
     QHBoxLayout, QLabel, QApplication, QMainWindow,
     QWidget, QSpacerItem, QSizePolicy
 )
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QCoreApplication
 from PyQt6.QtGui import QIcon, QPixmap
 import sys
 import os
@@ -57,6 +59,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("LoogTools")
         self.setGeometry(100, 100, 550, 540)
+        self.dark_mode = False  # Estado do modo noturno
         self.init_ui()
 
     def init_ui(self):
@@ -69,46 +72,49 @@ class MainWindow(QMainWindow):
 
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
+        self.central_widget = central_widget
 
         layout = QVBoxLayout()
         central_widget.setLayout(layout)
+        self.main_layout = layout
 
         # Adicionar o Banner:
-        banner_path = os.path.join('icones', 'global_hitss_banner.png')  # caminho do banner
+        self.banner_path_light = os.path.join('icones', 'global_hitss_banner.png')
+        self.banner_path_dark = os.path.join('icones', 'global_hitss_banner_branco.png')
+        self.banner_path = self.banner_path_light  # Inicializa com o banner claro
+
         try:
-            banner_pixmap = QPixmap(resource_path(banner_path))
+            banner_pixmap = QPixmap(resource_path(self.banner_path))
             banner_label = QLabel()
             banner_label.setPixmap(banner_pixmap.scaledToWidth(500))
             banner_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             layout.addWidget(banner_label)
         except Exception as e:
             print(f"Erro ao carregar banner: {e}")
+        
+        self.banner_label = banner_label  # Armazena a referência ao banner
 
         title_label = QLabel("Escolha uma Opção:")
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        title_label.setStyleSheet("""
-            QLabel {
-                font-size: 18pt;
-                font-weight: bold;
-                color: black;
-                margin-bottom: 20px;
-            }
-        """)
+        title_label.setObjectName("titleLabel")  # Add object name for styling
+        
+        self.title_label = title_label  # Armazena a referência ao title_label
+
         layout.addWidget(title_label)
 
         # Icons for buttons
         button_icons = {
             "CPE/GAT": os.path.join('icones', 'cpe_gat.png'),
-            # "Scripts": os.path.join('icones', 'scripts.png'),
-             "Treinamentos": os.path.join('icones', 'treinamentos.png'),
+            #"Scripts": os.path.join('icones', 'scripts.png'),
+            #"Treinamentos": os.path.join('icones', 'treinamentos.png'),
             "Telefonia": os.path.join('icones', 'telefonia.png'),
             "Troubleshooting": os.path.join('icones', 'troubleshooting.png')
         }
 
         buttons = {
             "CPE/GAT": self.open_cpe_gat,
-            # "Scripts": self.open_scripts,
-             "Treinamentos": self.open_treinamentos,
+            #"Scripts": self.open_scripts,
+            #"Treinamentos": self.open_treinamentos,
             "Telefonia": self.open_telefonia,
             "Troubleshooting": self.open_troubleshooting
         }
@@ -124,8 +130,9 @@ class MainWindow(QMainWindow):
                 except Exception as e:
                     print(f"Erro ao carregar ícone do botão: {e}")
 
-            button.setStyleSheet("""
-                QPushButton {
+            button.setObjectName(f"{text.replace('/', '_')}Button")
+            button.setStyleSheet(f"""
+                QPushButton#{text.replace('/', '_')}Button {{
                     font-size: 14pt;
                     color: white;
                     background-color: red;
@@ -133,13 +140,13 @@ class MainWindow(QMainWindow):
                     border-radius: 10px;
                     padding: 15px;
                     margin: 10px 50px;
-                }
-                QPushButton:hover {
+                }}
+                QPushButton#{text.replace('/', '_')}Button:hover {{
                     background-color: darkred;
-                }
-                QPushButton:pressed {
+                }}
+                QPushButton#{text.replace('/', '_')}Button:pressed {{
                     background-color: firebrick;
-                }
+                }}
             """)
             button.clicked.connect(callback)
             layout.addWidget(button)
@@ -150,8 +157,9 @@ class MainWindow(QMainWindow):
         # About Button (positioned at the bottom left)
         self.about_button = QPushButton("Sobre")
         self.about_button.clicked.connect(self.show_about_dialog)
+        self.about_button.setObjectName("aboutButton")
         self.about_button.setStyleSheet("""
-            QPushButton {
+            QPushButton#aboutButton {
                 font-size: 10pt;
                 color: white;
                 background-color: gray;
@@ -161,10 +169,10 @@ class MainWindow(QMainWindow):
                 min-width: 70px;
                 max-width: 70px;
             }
-            QPushButton:hover {
+            QPushButton#aboutButton:hover {
                 background-color: darkgray;
             }
-            QPushButton:pressed {
+            QPushButton#aboutButton:pressed {
                 background-color: dimgray;
             }
         """)
@@ -181,9 +189,15 @@ class MainWindow(QMainWindow):
         # Labels
         dev_label = QLabel("Desenvolvido por Ryan Nishikawa")
         version_label = QLabel("VERSÃO DO SOFTWARE 1.1.3")
+        dev_label.setObjectName("devLabel")
+        version_label.setObjectName("versionLabel")
+
+        self.dev_label = dev_label  # Armazena a referência para atualização
+        self.version_label = version_label # Armazena a referência para atualização
+
         for label in [dev_label, version_label]:
             label.setStyleSheet("""
-                QLabel {
+                QLabel#devLabel, QLabel#versionLabel {
                     font-size: 10pt;
                     color: black;
                 }
@@ -196,6 +210,31 @@ class MainWindow(QMainWindow):
         # Add the bottom layout to the main layout
         layout.addLayout(bottom_layout)
 
+        # Botão de alternância do modo noturno (adicionado aqui)
+        self.toggle_dark_mode_button = QPushButton("🌙")  # Ícone inicial: Lua
+        self.toggle_dark_mode_button.setCheckable(True) #Definir como checkable
+        self.toggle_dark_mode_button.setChecked(False) #Estado inicial
+        self.toggle_dark_mode_button.clicked.connect(self.toggle_dark_mode)
+        self.toggle_dark_mode_button.setStyleSheet("""
+            QPushButton {
+                font-size: 16pt;
+                border: none;
+                background-color: transparent;
+                color: black;
+                padding: 0;
+                min-width: 30px;
+                max-width: 30px;
+            }
+            QPushButton:checked {
+                color: white;
+            }
+            QPushButton:hover {
+                background-color: rgba(0, 0, 0, 0.1); /* Pequeno realce ao passar o mouse */
+            }
+        """)
+        bottom_layout.addWidget(self.toggle_dark_mode_button, alignment=Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignRight)
+
+        self.apply_stylesheet() # Garante que o estilo seja aplicado após a criação dos widgets
 
     def show_about_dialog(self):
         about_dialog = AboutDialog(self)
@@ -203,7 +242,7 @@ class MainWindow(QMainWindow):
 
     def open_navigation_window(self, window_type: str):
         try:
-            self.nav_window = NavigationWindow(window_type)
+            self.nav_window = NavigationWindow(window_type, self.dark_mode)
             self.nav_window.show()
             self.close()
         except Exception as e:
@@ -212,8 +251,8 @@ class MainWindow(QMainWindow):
     def open_cpe_gat(self):
         self.open_navigation_window("cpe_gat")
 
-    def open_treinamentos(self):
-        self.open_navigation_window("treinamentos")
+    #def open_treinamentos(self):
+        #self.open_navigation_window("treinamentos")
 
     #def open_scripts(self):
        #self.open_navigation_window("scripts")
@@ -224,6 +263,229 @@ class MainWindow(QMainWindow):
     def open_troubleshooting(self):
         self.open_navigation_window("troubleshooting")
 
+    def toggle_dark_mode(self):
+        self.dark_mode = not self.dark_mode
+        self.apply_stylesheet()
+        # Atualize o texto do botão e o ícone
+        if self.dark_mode:
+            self.toggle_dark_mode_button.setText("☀️")  # Ícone: Sol
+            self.toggle_dark_mode_button.setStyleSheet("""
+                QPushButton {
+                    font-size: 16pt;
+                    border: none;
+                    background-color: transparent;
+                    color: white;
+                    padding: 0;
+                    min-width: 30px;
+                    max-width: 30px;
+                }
+                QPushButton:hover {
+                    background-color: rgba(255, 255, 255, 0.1); /* Pequeno realce ao passar o mouse */
+                }
+            """)
+        else:
+            self.toggle_dark_mode_button.setText("🌙")  # Ícone: Lua
+            self.toggle_dark_mode_button.setStyleSheet("""
+                QPushButton {
+                    font-size: 16pt;
+                    border: none;
+                    background-color: transparent;
+                    color: black;
+                    padding: 0;
+                    min-width: 30px;
+                    max-width: 30px;
+                }
+                QPushButton:hover {
+                    background-color: rgba(0, 0, 0, 0.1); /* Pequeno realce ao passar o mouse */
+                }
+            """)
+
+
+    def apply_stylesheet(self):
+        if self.dark_mode:
+            self.central_widget.setStyleSheet("""
+                QWidget {
+                    background-color: #222222;
+                    color: #DDDDDD;
+                }
+
+                
+
+                QPushButton#CPE_GATButton, QPushButton#TreinamentosButton,
+                QPushButton#TelefoniaButton, QPushButton#TroubleshootingButton {
+                    background-color: #29434e;
+                }
+
+                QPushButton#CPE_GATButton:hover, QPushButton#TreinamentosButton:hover,
+                QPushButton#TelefoniaButton:hover, QPushButton#TroubleshootingButton:hover {
+                    background-color: #39535e;
+                }
+
+                QPushButton#CPE_GATButton:pressed, QPushButton#TreinamentosButton:pressed,
+                QPushButton#TelefoniaButton:pressed, QPushButton#TroubleshootingButton:pressed {
+                    background-color: #19333e;
+                }
+                
+            """)
+            
+            # Atualiza o estilo dos labels
+            self.dev_label.setStyleSheet("""
+                QLabel#devLabel, QLabel#versionLabel{
+                    font-size: 10pt;
+                    color: #DDDDDD;
+                }
+            """)
+            self.version_label.setStyleSheet("""
+                QLabel#devLabel, QLabel#versionLabel{
+                    font-size: 10pt;
+                    color: #DDDDDD;
+                }
+            """)
+            
+            self.title_label.setStyleSheet("""
+                QLabel#titleLabel {
+                    font-size: 18pt;
+                    font-weight: bold;
+                    color: #DDDDDD;
+                    margin-bottom: 20px;
+                }
+            """)
+            
+            # Atualiza o banner
+            self.banner_path = self.banner_path_dark
+            banner_pixmap = QPixmap(resource_path(self.banner_path))
+            self.banner_label.setPixmap(banner_pixmap.scaledToWidth(500))
+            
+            
+        else:
+            self.central_widget.setStyleSheet("")  # Reseta para o estilo padrão
+            
+            # Reseta os estilos dos labels
+            self.dev_label.setStyleSheet("""
+                QLabel#devLabel, QLabel#versionLabel{
+                    font-size: 10pt;
+                    color: black;
+                }
+            """)
+            self.version_label.setStyleSheet("""
+                QLabel#devLabel, QLabel#versionLabel{
+                    font-size: 10pt;
+                    color: black;
+                }
+            """)
+            
+            self.title_label.setStyleSheet("""
+                QLabel#titleLabel {
+                    font-size: 18pt;
+                    font-weight: bold;
+                    color: black;
+                    margin-bottom: 20px;
+                }
+            """)
+            
+            self.banner_path = self.banner_path_light
+            banner_pixmap = QPixmap(resource_path(self.banner_path))
+            self.banner_label.setPixmap(banner_pixmap.scaledToWidth(500))
+            
+            
+            
+            about_button = self.findChild(QPushButton, "aboutButton")
+            if about_button:
+                about_button.setStyleSheet("""
+                    QPushButton#aboutButton {
+                        font-size: 10pt;
+                        color: white;
+                        background-color: gray;
+                        border: none;
+                        border-radius: 5px;
+                        padding: 5px 10px;
+                        min-width: 70px;
+                        max-width: 70px;
+                    }
+                    QPushButton#aboutButton:hover {
+                        background-color: darkgray;
+                    }
+                    QPushButton#aboutButton:pressed {
+                        background-color: dimgray;
+                    }
+                """)
+
+            cpe_button = self.findChild(QPushButton, "CPE_GATButton")
+            if cpe_button:
+                cpe_button.setStyleSheet("""
+                    QPushButton#CPE_GATButton {
+                        font-size: 14pt;
+                        color: white;
+                        background-color: red;
+                        border: none;
+                        border-radius: 10px;
+                        padding: 15px;
+                        margin: 10px 50px;
+                    }
+                    QPushButton#CPE_GATButton:hover {
+                        background-color: darkred;
+                    }
+                    QPushButton#CPE_GATButton:pressed {
+                        background-color: firebrick;
+                    }
+                """)
+            treinamentos_button = self.findChild(QPushButton, "TreinamentosButton")
+            if treinamentos_button:
+                treinamentos_button.setStyleSheet("""
+                    QPushButton#TreinamentosButton {
+                        font-size: 14pt;
+                        color: white;
+                        background-color: red;
+                        border: none;
+                        border-radius: 10px;
+                        padding: 15px;
+                        margin: 10px 50px;
+                    }
+                    QPushButton#TreinamentosButton:hover {
+                        background-color: darkred;
+                    }
+                    QPushButton#TreinamentosButton:pressed {
+                        background-color: firebrick;
+                    }
+                """)
+            telefonia_button = self.findChild(QPushButton, "TelefoniaButton")
+            if telefonia_button:
+                telefonia_button.setStyleSheet("""
+                    QPushButton#TelefoniaButton {
+                        font-size: 14pt;
+                        color: white;
+                        background-color: red;
+                        border: none;
+                        border-radius: 10px;
+                        padding: 15px;
+                        margin: 10px 50px;
+                    }
+                    QPushButton#TelefoniaButton:hover {
+                        background-color: darkred;
+                    }
+                    QPushButton#TelefoniaButton:pressed {
+                        background-color: firebrick;
+                    }
+                """)
+            troubleshooting_button = self.findChild(QPushButton, "TroubleshootingButton")
+            if troubleshooting_button:
+                troubleshooting_button.setStyleSheet("""
+                    QPushButton#TroubleshootingButton {
+                        font-size: 14pt;
+                        color: white;
+                        background-color: red;
+                        border: none;
+                        border-radius: 10px;
+                        padding: 15px;
+                        margin: 10px 50px;
+                    }
+                    QPushButton#TroubleshootingButton:hover {
+                        background-color: darkred;
+                    }
+                    QPushButton#TroubleshootingButton:pressed {
+                        background-color: firebrick;
+                    }
+                """)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

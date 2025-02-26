@@ -5,16 +5,17 @@ from PyQt6.QtWidgets import (
     QTableWidgetItem, QSplitter, QScrollArea, QTextBrowser, QLabel,
     QFrame, QSizePolicy
 )
-from PyQt6.QtCore import Qt, QPoint, QUrl
-from PyQt6.QtGui import QKeySequence, QShortcut, QTextCharFormat, QColor, QDesktopServices, QWheelEvent
+from PyQt6.QtCore import Qt, QUrl
+from PyQt6.QtGui import QKeySequence, QShortcut, QDesktopServices, QWheelEvent
 from PyQt6.QtPdfWidgets import QPdfView
 from PyQt6.QtPdf import QPdfDocument
 
 
 class SearchOverlay(QFrame):
-    def __init__(self, content_viewer=None):
+    def __init__(self, content_viewer=None, dark_mode=False):
         super().__init__()
         self.content_viewer = content_viewer
+        self.dark_mode = dark_mode
         self.setup_ui()
 
     def setup_ui(self):
@@ -24,13 +25,18 @@ class SearchOverlay(QFrame):
 
         self.search_input = QLineEdit(self)
         self.search_input.setPlaceholderText("Buscar no texto...")
+        self.search_input.setObjectName("searchTroubleshootingInput")  # Definindo nome para estilização
         self.search_input.setStyleSheet("""
-            QLineEdit {
+            QLineEdit#searchTroubleshootingInput {
                 background-color: white;
                 border: 1px solid gray;
                 border-radius: 4px;
                 padding: 4px;
                 max-width: 200px;
+                color: black; /* Cor do texto */
+            }
+            QLineEdit#searchTroubleshootingInput::placeholder {
+                color: #777777; /* Cor do placeholder (cinza mais escuro) */
             }
         """)
         layout.addWidget(self.search_input)
@@ -59,8 +65,9 @@ class SearchOverlay(QFrame):
 
 
 class ContentViewer(QScrollArea):
-    def __init__(self):
+    def __init__(self, dark_mode=False):
         super().__init__()
+        self.dark_mode = dark_mode
         self.setup_ui()
         self.content_type = None
         self.current_file_path = None
@@ -69,10 +76,13 @@ class ContentViewer(QScrollArea):
     def setup_ui(self):
         self.setWidgetResizable(True)
         self.container = QWidget()
+        self.container.setObjectName("troubleshootingViewerContainer")  # Definindo nome para estilização
+
         layout = QVBoxLayout(self.container)
         layout.setContentsMargins(0, 0, 0, 0)
+        self.main_layout = layout
 
-        self.search_overlay = SearchOverlay(content_viewer=self)
+        self.search_overlay = SearchOverlay(content_viewer=self, dark_mode=self.dark_mode)
         self.search_overlay.hide()
         layout.addWidget(self.search_overlay, alignment=Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop)
 
@@ -80,26 +90,23 @@ class ContentViewer(QScrollArea):
         self.content_widget.setOpenExternalLinks(False)
         # Configurar o QTextBrowser para lidar com recursos locais
         self.content_widget.setOpenLinks(False)
-        self.content_widget.setStyleSheet("""
-            QTextBrowser {
-                background-color: white;
-                padding: 10px;
-                white-space: pre-wrap;
-            }
-            br {
-                display: block;
-            }
-        """)
+        self.content_widget.setObjectName("troubleshootingContentBrowser")  # Definindo nome para estilização
 
-        self.pdf_view = QPdfView(self)
+        self.pdf_view = QPdfView(self.container)
+        self.pdf_view.setObjectName("troubleshootingPdfView")  # Definindo nome para estilização
         self.pdf_view.setVisible(False)
-        self.pdf_document = QPdfDocument(self)
+        self.pdf_document = QPdfDocument(self.container)
 
         layout.addWidget(self.content_widget)
         layout.addWidget(self.pdf_view)
 
         self.setWidget(self.container)
         self.original_html = ""
+
+        # Ativar funcionalidade de zoom com Ctrl+roda do mouse
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.shortcut = QShortcut(QKeySequence("Ctrl+F"), self)
+        self.shortcut.activated.connect(self.toggle_search)
 
     def toggle_search(self):
         if self.content_type == "text":
@@ -128,6 +135,10 @@ class ContentViewer(QScrollArea):
             )
 
             self.content_widget.setHtml(highlighted_html)
+
+    def open_link(self, url):
+        """Abrir link no navegador padrão."""
+        QDesktopServices.openUrl(QUrl(url))
 
     def load_content(self, file_path: str):
         if not os.path.exists(file_path):
@@ -158,6 +169,52 @@ class ContentViewer(QScrollArea):
 
         if self.content_type == "pdf":
             return
+
+        def replace_image(match):
+            image_path = match.group(1)
+            abs_path = os.path.join(self.base_path, image_path)
+            if os.path.exists(abs_path):
+                # Usar o caminho com file:/// para garantir que o QTextBrowser possa carregar
+                return f'<img src="file:///{abs_path.replace(os.sep, "/")}" />'
+            else:
+                print(f"Imagem não encontrada: {abs_path}")
+                return f'[Imagem não encontrada: {image_path}]'
+
+        def replace_styles(match):
+            styles = match.group(1).split(':')
+            text = match.group(2)
+            css_styles = []
+            is_block = False
+            for style in styles:
+                if style == 'bold':
+                    css_styles.append('font-weight: bold')
+                elif style == 'center':
+                    css_styles.append('text-align: center')
+                elif style == 'left':
+                    css_styles.append('text-align: left')
+                elif style == 'right':
+                    css_styles.append('text-align: right')
+                elif style == 'red':
+                    css_styles.append('color: red')
+                elif style == 'yellow':
+                    css_styles.append('color: yellow')
+                elif style == 'blue':
+                    css_styles.append('color: blue')
+                elif style == 'cipher':
+                    css_styles.append('text-decoration: line-through')
+                elif style.startswith('font:'):
+                    font_name = style.split(':')[1]
+                    css_styles.append(f'font-family: {font_name}')
+            css_style_string = "; ".join(css_styles)
+            tag = "div" if is_block else "span"
+            return f'<{tag} style="{css_style_string}">{text}</{tag}>'
+
+        content = re.sub(r'\[style:(.*?)\](.*?)\[\/style\]', replace_styles, content, flags=re.DOTALL)
+        content = re.sub(r'\[image:(.*?)\]', replace_image, content)
+        # Verificar se há links e transformar em tags <a>
+        content = re.sub(r'(https?://\S+)', r'<a href="\1">\1</a>', content)
+
+        content = content.replace('\n', '<br>')
 
         self.original_html = content
         self.content_widget.setHtml(self.original_html)
@@ -231,28 +288,33 @@ class ContentViewer(QScrollArea):
 
 
 class TroubleshootingWidget(QWidget):
-    def __init__(self):
+    def __init__(self, dark_mode=False):
         super().__init__()
+        self.dark_mode = dark_mode
         self.processes = []
         self.setup_ui()
         self.load_processes()
+        self.apply_stylesheet()  # Aplicar tema no construtor
 
     def setup_ui(self):
         layout = QVBoxLayout()
         self.setLayout(layout)
+        self.main_layout = layout
 
         splitter = QSplitter(Qt.Orientation.Horizontal)
-        layout.addWidget(splitter)
+        splitter.setObjectName("troubleshootingSplitter")  # Nomeando para estilizar
 
         left_widget = QWidget()
+        left_widget.setObjectName("troubleshootingLeftWidget")  # Nomeando para estilizar
         left_layout = QVBoxLayout(left_widget)
 
         self.search_input = QLineEdit()
+        self.search_input.setObjectName("troubleshootingSearchInput")  # Nomeando para estilizar
         self.search_input.setPlaceholderText("Digite para filtrar processos...")
-        self.search_input.textChanged.connect(self.filter_table)
         left_layout.addWidget(self.search_input)
 
         self.table = QTableWidget()
+        self.table.setObjectName("troubleshootingTable")  # Nomeando para estilizar
         self.table.setColumnCount(2)
         self.table.setHorizontalHeaderLabels(["Processo", "Descrição"])
         self.table.horizontalHeader().setStretchLastSection(True)
@@ -261,11 +323,13 @@ class TroubleshootingWidget(QWidget):
         self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         left_layout.addWidget(self.table)
 
-        self.content_viewer = ContentViewer()
+        self.content_viewer = ContentViewer(dark_mode=self.dark_mode)
+        self.content_viewer.setObjectName("troubleshootingContentViewer")  # Nomeando para estilizar
 
         splitter.addWidget(left_widget)
         splitter.addWidget(self.content_viewer)
         splitter.setSizes([300, 700])
+        layout.addWidget(splitter)  # Adicionar o splitter ao layout principal
 
     def load_processes(self):
         base_path = os.path.join(os.path.dirname(__file__), "processos", "Textos Processos")
@@ -292,52 +356,7 @@ class TroubleshootingWidget(QWidget):
                 images_base_path = os.path.join(os.path.dirname(os.path.dirname(file_path)), "imagens")
                 print(f"Caminho base das imagens: {images_base_path}")  # Debug
 
-                def replace_image(match):
-                    image_path = match.group(1)
-                    abs_path = os.path.join(images_base_path, image_path)
-                    print(f"Tentando carregar imagem: {abs_path}")  # Debug
-                    if os.path.exists(abs_path):
-                        # Usar o caminho com file:/// para garantir que o QTextBrowser possa carregar
-                        return f'<img src="file:///{abs_path.replace(os.sep, "/")}" />'
-                    else:
-                        print(f"Imagem não encontrada: {abs_path}")  # Debug
-                        return f'[Imagem não encontrada: {image_path}]'
-
-                def replace_styles(match):
-                    styles = match.group(1).split(':')
-                    text = match.group(2)
-                    css_styles = []
-                    is_block = False
-                    for style in styles:
-                        if style == 'bold':
-                            css_styles.append('font-weight: bold')
-                        elif style == 'center':
-                            css_styles.append('text-align: center')
-                            is_block = True
-                        elif style == 'left':
-                            css_styles.append('text-align: left')
-                            is_block = True
-                        elif style == 'right':
-                            css_styles.append('text-align: right')
-                            is_block = True
-                        elif style == 'red':
-                            css_styles.append('color: red')
-                        elif style == 'yellow':
-                            css_styles.append('color: yellow')
-                        elif style == 'blue':
-                            css_styles.append('color: blue')
-                        elif style == 'cipher':
-                            css_styles.append('text-decoration: line-through')
-                        elif style.startswith('font:'):
-                            font_name = style.split(':')[1]
-                            css_styles.append(f'font-family: {font_name}')
-                    css_style_string = "; ".join(css_styles)
-                    tag = "div" if is_block else "span"
-                    return f'<{tag} style="{css_style_string}">{text}</{tag}>'
-
-                content = re.sub(r'\[style:(.*?)\](.*?)\[\/style\]', replace_styles, content, flags=re.DOTALL)
-                content = re.sub(r'\[image:(.*?)\]', replace_image, content)
-                content = content.replace('\n', '<br>')
+                self.content_viewer.set_base_path(images_base_path)  # Define o caminho base
 
                 self.processes.append({
                     "name": process_name,
@@ -373,6 +392,71 @@ class TroubleshootingWidget(QWidget):
             file_path = self.processes[row]["file_path"]
             content = self.processes[row]["content"]
             self.content_viewer.clear_content()
-            self.content_viewer.set_base_path(os.path.dirname(file_path))
-            self.content_viewer.process_and_display(content)                        
+            # self.content_viewer.set_base_path(os.path.dirname(file_path)) #Não precisa mais
+            self.content_viewer.process_and_display(content)
 
+    def apply_stylesheet(self):
+        # Aplicar tema base
+        if self.dark_mode:
+            self.setStyleSheet("""
+                QWidget {
+                    background-color: #222222;
+                    color: #DDDDDD;
+                }
+            """)
+
+            self.search_input.setStyleSheet("""
+                QLineEdit#troubleshootingSearchInput {
+                    background-color: #333333;
+                    color: #DDDDDD;
+                    border: 1px solid #555555;
+                    border-radius: 4px;
+                    padding: 4px;
+                    max-width: 200px;
+                }
+            """)
+
+            self.table.setStyleSheet("""
+                QTableWidget#troubleshootingTable {
+                    background-color: #333333;
+                    color: #DDDDDD;
+                    border: 1px solid #555555;
+                }
+
+                QHeaderView::section {
+                    background-color: #333333;
+                    color: #DDDDDD;
+                    border: none;
+                }
+            """)
+
+            self.content_viewer.content_widget.setStyleSheet("""
+                QTextBrowser#troubleshootingContentBrowser {
+                    background-color: #333333;
+                    padding: 10px;
+                    white-space: pre-wrap;
+                    color: #DDDDDD;
+                }
+            """)
+        else:
+            self.setStyleSheet("")  # Limpa o estilo para o modo normal
+
+            self.search_input.setStyleSheet("""
+                QLineEdit#troubleshootingSearchInput {
+                    background-color: white;
+                    border: 1px solid gray;
+                    border-radius: 4px;
+                    padding: 4px;
+                    max-width: 200px;
+                }
+            """)
+
+            self.table.setStyleSheet("")
+            self.content_viewer.content_widget.setStyleSheet("""
+                QTextBrowser#troubleshootingContentBrowser {
+                    background-color: white;
+                    padding: 10px;
+                    white-space: pre-wrap;
+                    color: black;
+                }
+            """)

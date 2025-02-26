@@ -1,11 +1,14 @@
+# observacao.py
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QLabel, QTextEdit, QPushButton, QHBoxLayout, QMessageBox, QFrame)
 from PyQt6.QtGui import QGuiApplication
 from PyQt6.QtCore import Qt
 
 class ObservacaoWidget(QWidget):
-    def __init__(self):
+    def __init__(self, dark_mode=False):
         super().__init__()
+        self.dark_mode = dark_mode
         self.init_ui()
+        self.update_theme()  # Aplicar o tema inicial
 
     def init_ui(self):
         layout = QVBoxLayout()
@@ -32,14 +35,7 @@ class ObservacaoWidget(QWidget):
         text_field = QTextEdit()
         text_field.setFrameStyle(QFrame.Shape.Box | QFrame.Shadow.Sunken)
         text_field.setMinimumHeight(100)
-        text_field.setStyleSheet("""
-            QTextEdit {
-                background-color: white;
-                color: black;
-                border: 1px solid gray;
-                padding: 5px;
-            }
-        """)
+        # Removido estilo hardcoded
         parent_layout.addWidget(text_field)
         return text_field
 
@@ -69,14 +65,7 @@ class ObservacaoWidget(QWidget):
         output = QTextEdit()
         output.setReadOnly(True)
         output.setMinimumHeight(200)
-        output.setStyleSheet("""
-            QTextEdit {
-                background-color: white;
-                color: black;
-                border: 1px solid gray;
-                padding: 5px;
-            }
-        """)
+        # Removido estilo hardcoded
         parent_layout.addWidget(output)
         return output
 
@@ -124,3 +113,25 @@ class ObservacaoWidget(QWidget):
             clipboard = QGuiApplication.clipboard()
             clipboard.setText(formatted_text)
             QMessageBox.information(self, "Sucesso", "Texto copiado para a área de transferência!")
+
+    def update_theme(self):
+        if self.dark_mode:
+            text_edit_style = """
+                QTextEdit {
+                    background-color: #333333;
+                    color: #DDDDDD;
+                    border: 1px solid gray;
+                    padding: 5px;
+                }
+            """
+        else:
+            text_edit_style = """
+                QTextEdit {
+                    background-color: white;
+                    color: black;
+                    border: 1px solid gray;
+                    padding: 5px;
+                }
+            """
+        for child in self.findChildren(QTextEdit):
+            child.setStyleSheet(text_edit_style)
