@@ -188,7 +188,7 @@ class MainWindow(QMainWindow):
 
         # Labels
         dev_label = QLabel("Desenvolvido por Ryan Nishikawa")
-        version_label = QLabel("VERSÃO DO SOFTWARE 1.1.3")
+        version_label = QLabel("VERSÃO DO SOFTWARE 1.1.4")
         dev_label.setObjectName("devLabel")
         version_label.setObjectName("versionLabel")
 
