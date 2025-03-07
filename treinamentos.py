@@ -10,6 +10,7 @@ from PyQt6.QtCore import Qt, QUrl, QTimer, pyqtSignal
 from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PyQt6.QtMultimediaWidgets import QVideoWidget
 from PyQt6.QtGui import QKeySequence, QShortcut, QPixmap
+
 # Imports adicionais para lidar com PDFs
 from PyQt6.QtPdfWidgets import QPdfView
 from PyQt6.QtPdf import QPdfDocument
@@ -173,39 +174,23 @@ class ContentViewer(QScrollArea):
 
             # Controles em um widget separado
             self.controls_widget = QWidget()
+            self.controls_widget.setObjectName("videoControls")  # Adiciona um nome para estilização
             self.controls_layout = QHBoxLayout(self.controls_widget)
             self.controls_layout.setContentsMargins(5, 5, 5, 5)
 
-            # Estilo para os controles
-            self.controls_widget.setStyleSheet("""
-                QWidget {
-                    background-color: rgba(0, 0, 0, 0.7);
-                }
-                QPushButton {
-                    color: white;
-                    border: none;
-                    padding: 5px;
-                    font-size: 16px;
-                }
-                QPushButton:hover {
-                    background-color: rgba(255, 255, 255, 0.2);
-                }
-                QSlider::handle {
-                    background: white;
-                    border: 1px solid #5c5c5c;
-                }
-            """)
-
             # Adicionar controles
             self.play_button = QPushButton("►")
+            self.play_button.setObjectName("playButton")  # Adiciona um nome para estilização
             self.controls_layout.addWidget(self.play_button)
             self.play_button.clicked.connect(self.play_pause)
 
             self.position_slider = QSlider(Qt.Orientation.Horizontal)
+            self.position_slider.setObjectName("positionSlider")  # Adiciona um nome para estilização
             self.position_slider.sliderMoved.connect(self.set_position)
             self.controls_layout.addWidget(self.position_slider)
 
             self.volume_slider = QSlider(Qt.Orientation.Horizontal)
+            self.volume_slider.setObjectName("volumeSlider")  # Adiciona um nome para estilização
             self.volume_slider.setMaximum(100)
             self.volume_slider.setValue(50)
             self.volume_slider.setMaximumWidth(100)
@@ -213,6 +198,7 @@ class ContentViewer(QScrollArea):
             self.controls_layout.addWidget(self.volume_slider)
 
             self.fullscreen_button = QPushButton("⛶")
+            self.fullscreen_button.setObjectName("fullscreenButton")  # Adiciona um nome para estilização
             self.fullscreen_button.clicked.connect(self.toggle_fullscreen)
             self.controls_layout.addWidget(self.fullscreen_button)
 
